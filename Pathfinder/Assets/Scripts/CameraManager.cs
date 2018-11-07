@@ -36,14 +36,14 @@ public class CameraManager : MonoBehaviour {
 		float dx = Input.GetAxisRaw( "Horizontal" );
 		float dy = Input.GetAxisRaw( "Vertical" );
 
-		if (Input.mousePosition.x <= this.panBorderThickness)
-			dx -= 1;
-		if (Input.mousePosition.x >= Screen.width - this.panBorderThickness)
-			dx += 1;
-		if (Input.mousePosition.y <= this.panBorderThickness)
-			dy -= 1;
-		if (Input.mousePosition.y >= Screen.height - this.panBorderThickness)
-			dy += 1;
+		//if (Input.mousePosition.x <= this.panBorderThickness)
+		//	dx -= 1;
+		//if (Input.mousePosition.x >= Screen.width - this.panBorderThickness)
+		//	dx += 1;
+		//if (Input.mousePosition.y <= this.panBorderThickness)
+		//	dy -= 1;
+		//if (Input.mousePosition.y >= Screen.height - this.panBorderThickness)
+		//	dy += 1;
 
 		if (Input.GetMouseButtonDown(1)) {
 			this.dragOrigin = GetMousePlanePosition();
@@ -51,7 +51,7 @@ public class CameraManager : MonoBehaviour {
 		}
 		if (Input.GetMouseButton(1)) {
 			
-			if ( (this.dragOrigin - GetMousePlanePosition()).magnitude > 0.2 ) {
+			if ( (this.dragOrigin - GetMousePlanePosition()).magnitude > 0.5 ) {
 				enableDrag = true;
 			}
 			if (this.enableDrag) {

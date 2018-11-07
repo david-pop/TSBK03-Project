@@ -17,8 +17,8 @@ public class UnitManager : MonoBehaviour {
         units = new List<GameObject>();
         selectedUnits = new List<GameObject>();
 
-        createUnitAtPosition( new Vector3(10, 1, 10) );
-        createUnitAtPosition( new Vector3(15, 1, 10) );
+        createUnitAtPosition( new Vector3(10, 0, 10) );
+        createUnitAtPosition( new Vector3(15, 0, 10) );
 	}
 
 	// Update is called once per frame

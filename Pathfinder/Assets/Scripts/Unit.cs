@@ -10,6 +10,10 @@ public class Unit : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
+		Vector3 groundPos = this.transform.position;
+		groundPos.y = this.transform.localScale.y;
+		this.transform.position = groundPos;
+
 		this.goalPosition = this.transform.position;
 		this.direction.Set(1, 0, 0);
 	}
@@ -34,7 +38,7 @@ public class Unit : MonoBehaviour {
 	}
 
 	public void SetGoalPosition(Vector3 goal) {
-		goal.y = 1;
+		goal.y = this.transform.localScale.y;
 		this.goalPosition = goal;
 		this.direction = this.goalPosition - this.transform.position;
 	}

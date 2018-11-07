@@ -16,8 +16,11 @@ public class UnitManager : MonoBehaviour {
 	void Start () {
         units = new List<GameObject>();
         selectedUnits = new List<GameObject>();
+
+        createUnitAtPosition( new Vector3(10, 1, 10) );
+        createUnitAtPosition( new Vector3(15, 1, 10) );
 	}
-	
+
 	// Update is called once per frame
 	void Update () {
         if(Input.GetMouseButtonDown(0)){
@@ -33,6 +36,15 @@ public class UnitManager : MonoBehaviour {
                         selectUnit(hitObject);
                     }
                 }
+            }
+        }
+
+        if(Input.GetMouseButtonDown(1)){
+            Vector3 pos = GetMousePlanePosition();
+
+            foreach(GameObject unit in selectedUnits){
+                Unit obj = unit.GetComponent<Unit>();
+                obj.SetGoalPosition(pos);
             }
         }
 	}
@@ -58,5 +70,16 @@ public class UnitManager : MonoBehaviour {
         }
 
         selectedUnits.Clear();
+    }
+
+    private Vector3 GetMousePlanePosition() {
+        Plane plane = new Plane( Vector3.up, Vector3.right );
+        Ray ray = Camera.main.ScreenPointToRay( Input.mousePosition );
+        float distance = 0.0f;
+
+        if ( plane.Raycast( ray, out distance ) )
+            return ray.GetPoint( distance );
+        else
+            return Vector3.zero;
     }
 }

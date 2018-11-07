@@ -50,7 +50,7 @@ public class CameraManager : MonoBehaviour {
 			enableDrag = false;
 		}
 		if (Input.GetMouseButton(1)) {
-			
+
 			if ( (this.dragOrigin - GetMousePlanePosition()).magnitude > 0.5 ) {
 				enableDrag = true;
 			}

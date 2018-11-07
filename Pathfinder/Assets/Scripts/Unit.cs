@@ -34,6 +34,7 @@ public class Unit : MonoBehaviour {
 	}
 
 	public void SetGoalPosition(Vector3 goal) {
+		goal.y = 1;
 		this.goalPosition = goal;
 		this.direction = this.goalPosition - this.transform.position;
 	}

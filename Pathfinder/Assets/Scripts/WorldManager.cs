@@ -84,6 +84,10 @@ public class WorldManager : MonoBehaviour {
 		plane.transform.position = new Vector3(translation, 0, translation);
 	}
 
+	public bool IsAccessible(int x, int z) {
+		return (this.worldGrid[x, z] == 0);
+	}
+
 	public void debugFlowfield(FlowField ff) {
 		// Debug map
 		for (int x = 0; x < this.GridSize; x++) {

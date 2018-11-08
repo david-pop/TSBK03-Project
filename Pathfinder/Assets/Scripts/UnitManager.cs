@@ -19,8 +19,15 @@ public class UnitManager : MonoBehaviour {
         units = new List<GameObject>();
         selectedUnits = new List<GameObject>();
 
-        for (int i=0; i<10000; i++)
-            createUnitAtPosition( new Vector3(Random.Range(0,100), 0, Random.Range(0,100)) );
+        int unitCount = 1000;
+        while (unitCount > 0) {
+            int x = Random.Range(0,100);
+            int z = Random.Range(0,100);
+            if ( WorldManager.Instance.IsAccessible(x, z) ) {
+                createUnitAtPosition( new Vector3(x+0.5f, 0, z+0.5f) );
+                unitCount -= 1;
+            }
+        }
 	}
 
 	// Update is called once per frame

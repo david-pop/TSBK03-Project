@@ -7,7 +7,7 @@ public class CameraManager : MonoBehaviour {
 	private float panSpeed;				// The camera movement speed
 	private float smoothing;			// The speed with which the camera will be following.
 	private Vector4 panLimit;			// Camera limits
-	private float panBorderThickness;	// Border size for mouse camera movement
+	//private float panBorderThickness;	// Border size for mouse camera movement
 
 	private Vector3 offset;				// The initial offset from the target.
 	private Vector3 movement;			// Current camera velocity
@@ -22,11 +22,11 @@ public class CameraManager : MonoBehaviour {
 		this.smoothing = 10;
 		this.panLimit.Set(
 			4,
-			4,
+			3,
 			WorldManager.Instance.GridSize - 4,
-			WorldManager.Instance.GridSize - 4
+			WorldManager.Instance.GridSize - 5
 		);
-		this.panBorderThickness = 10;
+		//this.panBorderThickness = 10;
 
 		this.offset = this.transform.position;
 		this.movement.Set(0, 0, 0);

@@ -24,9 +24,9 @@ public class Unit : MonoBehaviour {
 			Vector3 newPos = Vector3.MoveTowards( this.transform.position, this.goalPosition, this.speed * Time.deltaTime );
 			this.transform.position = newPos;
 		}
-		else if (Random.Range(0.0f, 1.0f) < 0.02) {
-			this.goalPosition += new Vector3(Random.Range(-1, 2), 0, Random.Range(-1, 2));
-		}
+		//else if (Random.Range(0.0f, 1.0f) < 0.02) {
+		//	this.goalPosition += new Vector3(Random.Range(-1, 2), 0, Random.Range(-1, 2));
+		//}
 	}
 
 	public void SetGoalPosition(Vector3 goal) {

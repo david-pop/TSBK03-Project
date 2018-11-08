@@ -11,43 +11,49 @@ public class UnitManager : MonoBehaviour {
 
     private List<GameObject> units;
     private List<GameObject> selectedUnits;
+    private bool isSelecting = false;
+    private Vector3 mousePosition1;
 
 	// Use this for initialization
 	void Start () {
         units = new List<GameObject>();
         selectedUnits = new List<GameObject>();
 
-        createUnitAtPosition( new Vector3(10, 0, 10) );
-        createUnitAtPosition( new Vector3(15, 0, 10) );
+        for (int i=0; i<10000; i++)
+            createUnitAtPosition( new Vector3(Random.Range(0,100), 0, Random.Range(0,100)) );
 	}
 
 	// Update is called once per frame
 	void Update () {
-        if(Input.GetMouseButtonDown(0)){
-            clearSelection();
+        if (Input.GetMouseButtonDown(0)) {
+            isSelecting = true;
+            mousePosition1 = Input.mousePosition;
+        }
 
-            RaycastHit hit;
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-
-            if(Physics.Raycast(ray, out hit)){
-                if(hit.collider != null){
-                    GameObject hitObject = hit.collider.gameObject;
-                    if(units.Contains(hitObject)){
-                        selectUnit(hitObject);
-                    }
-                }
-            }
+        if (Input.GetMouseButtonUp(0)) {
+            isSelecting = false;
+            selectUnits(mousePosition1, Input.mousePosition);
         }
 
         if(Input.GetMouseButtonDown(1)){
-            Vector3 pos = GetMousePlanePosition();
+            Vector3 pos = Utils.GetMousePlanePosition();
 
             foreach(GameObject unit in selectedUnits){
                 Unit obj = unit.GetComponent<Unit>();
                 obj.SetGoalPosition(pos);
             }
         }
-	}
+    }
+
+    void OnGUI() {
+        if( isSelecting )
+        {
+            // Create a rect from both mouse positions
+            var rect = Utils.GetScreenRect( mousePosition1, Input.mousePosition );
+            Utils.DrawScreenRect( rect, new Color( 0.8f, 0.1f, 0.0f, 0.1f ) );
+            Utils.DrawScreenRectBorder( rect, 2, new Color( 0.8f, 0.1f, 0.0f, 1.0f ) );
+        }
+    }
 
     private void createUnitAtPosition(Vector3 pos){
         GameObject newUnit = Instantiate(unitPrefab);
@@ -55,31 +61,20 @@ public class UnitManager : MonoBehaviour {
         units.Add(newUnit);
     }
 
-    private void selectUnit(GameObject unit){
-        selectedUnits.Add(unit);
-        unit.GetComponent<MeshRenderer>().material = selectedUnitMaterial;
-    }
-
-    private void deselectUnit(GameObject unit){
-        unit.GetComponent<MeshRenderer>().material = defaultUnitMaterial;
-    }
-
-    private void clearSelection(){
-        foreach(GameObject unit in selectedUnits){
-            deselectUnit(unit);
+    private void selectUnits (Vector3 mousePosition1, Vector3 mousePosition2) {
+        foreach (GameObject unit in selectedUnits) {
+            unit.GetComponent<MeshRenderer>().material = defaultUnitMaterial;
         }
-
         selectedUnits.Clear();
-    }
 
-    private Vector3 GetMousePlanePosition() {
-        Plane plane = new Plane( Vector3.up, Vector3.right );
-        Ray ray = Camera.main.ScreenPointToRay( Input.mousePosition );
-        float distance = 0.0f;
+        var viewportBounds = Utils.GetViewportBounds( Camera.main, mousePosition1, mousePosition2 );
 
-        if ( plane.Raycast( ray, out distance ) )
-            return ray.GetPoint( distance );
-        else
-            return Vector3.zero;
+        foreach ( GameObject unit in units ) {
+            Vector3 p = unit.transform.position;
+            if ( viewportBounds.Contains( Camera.main.WorldToViewportPoint( p ) ) ) {
+                selectedUnits.Add( unit );
+                unit.GetComponent<MeshRenderer>().material = selectedUnitMaterial;
+            }
+        }
     }
 }

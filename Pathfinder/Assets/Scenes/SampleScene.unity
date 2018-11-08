@@ -342,6 +342,7 @@ MonoBehaviour:
   obstacleMaterial: {fileID: 2100000, guid: cc3831aabec484c00816f98ab2ad3e24, type: 2}
   GridSize: 100
   CellSize: 1
+  arrow: {fileID: 1506627861900588, guid: 4e8b3c4d2366742558315340a9f28a9f, type: 2}
 --- !u!4 &1580663488
 Transform:
   m_ObjectHideFlags: 0
@@ -382,7 +383,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cc70f10f3969444b29c3b56a1007edac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  groundPlaneSize: 100
 --- !u!4 &1863467966
 Transform:
   m_ObjectHideFlags: 0

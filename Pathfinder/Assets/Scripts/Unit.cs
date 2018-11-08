@@ -5,7 +5,7 @@ using UnityEngine;
 public class Unit : MonoBehaviour {
 	private float speed = 2.0f;
 	private Vector3 goalPosition;
-    private FlowField ff = null;
+	private FlowField ff = null;
 
 
 	// Use this for initialization
@@ -24,14 +24,18 @@ public class Unit : MonoBehaviour {
 		//	this.goalPosition += new Vector3(Random.Range(-1, 2), 0, Random.Range(-1, 2));
 		//}
 
-        if(ff != null){
-            this.transform.forward = this.goalPosition - this.transform.position;
+		if(ff != null){
+			this.transform.forward = this.goalPosition - this.transform.position;
+			Vector3 dir = this.ff.getDirection(this.transform.position);
+			this.goalPosition = this.transform.position + dir;
 
-            Vector3 newPos = Vector3.MoveTowards(this.transform.position, this.goalPosition, this.speed * Time.deltaTime);
-            this.transform.position = newPos;
-            goalPosition = this.transform.position +
-                this.ff.getDirection(this.transform.position);
-        }
+			Vector3 newPos = Vector3.MoveTowards(this.transform.position, this.goalPosition, this.speed * Time.deltaTime);
+			this.transform.position = newPos;
+
+			if (this.transform.position == this.goalPosition) {
+				ff = null;
+			}
+		}
 	}
 
 	public void SetGoalPosition(Vector3 goal) {
@@ -39,8 +43,8 @@ public class Unit : MonoBehaviour {
 		this.goalPosition = goal;
 	}
 
-    public void setFlowField(FlowField ff){
-        this.ff = ff;
-        SetGoalPosition(this.transform.position);
-    }
+	public void setFlowField(FlowField ff){
+		this.ff = ff;
+		SetGoalPosition(this.transform.position);
+	}
 }

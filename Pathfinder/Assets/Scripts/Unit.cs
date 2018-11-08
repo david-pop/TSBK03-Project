@@ -25,16 +25,19 @@ public class Unit : MonoBehaviour {
 		//}
 
 		if(ff != null){
-			this.transform.forward = this.goalPosition - this.transform.position;
 			Vector3 dir = this.ff.getDirection(this.transform.position);
-			this.goalPosition = this.transform.position + dir;
+            if (dir.sqrMagnitude > 0)
+            {
+                this.transform.forward = dir;
+                this.goalPosition = this.transform.position + dir;
 
-			Vector3 newPos = Vector3.MoveTowards(this.transform.position, this.goalPosition, this.speed * Time.deltaTime);
-			this.transform.position = newPos;
-
-			if (this.transform.position == this.goalPosition) {
-				ff = null;
-			}
+                Vector3 newPos = Vector3.MoveTowards(this.transform.position, this.goalPosition, this.speed * Time.deltaTime);
+                this.transform.position = newPos;
+            }
+            else
+            {
+                ff = null;
+            }
 		}
 	}
 

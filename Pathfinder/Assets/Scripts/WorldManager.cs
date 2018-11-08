@@ -51,7 +51,6 @@ public class WorldManager : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		FlowField ff = new FlowField( this.worldGrid, 1, this.GridSize/2, this.GridSize/2 );
 	}
 
 	private void addSquareObstacleOfSizeAtPosition(int size, int gridX, int gridZ, float height){

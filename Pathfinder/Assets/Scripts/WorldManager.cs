@@ -10,7 +10,7 @@ public class WorldManager : MonoBehaviour {
 	public int GridSize = 100;
 	public int CellSize = 1;
 
-	private int[,] worldGrid;
+	public int[,] worldGrid;
 
 	public GameObject arrow;
 
@@ -84,7 +84,7 @@ public class WorldManager : MonoBehaviour {
 		plane.transform.position = new Vector3(translation, 0, translation);
 	}
 
-	private void debugFlowfield(FlowField ff) {
+	public void debugFlowfield(FlowField ff) {
 		// Debug map
 		for (int x = 0; x < this.GridSize; x++) {
 			for (int z = 0; z < this.GridSize; z++) {

@@ -25,6 +25,13 @@ public class FlowField {
 	private Queue<Node> searchQueue;
 
 
+    public FlowField(int[,] obstacleField, int cellSize, float goalX, float goalZ):
+    this(obstacleField, cellSize, 
+         Mathf.FloorToInt(goalX / cellSize), 
+         Mathf.FloorToInt(goalZ / cellSize)){
+
+    }
+
 	public FlowField(int[,] obstacleField, int cellSize, int goalX, int goalZ) {
 		width = obstacleField.GetLength(0);
 		height = obstacleField.GetLength(1);
@@ -99,15 +106,15 @@ public class FlowField {
 			float top = ((z + 1) >= height || obstacleField[x, z + 1] != 0) ?
 				integratorField[x, z] : integratorField[x, z + 1];
 
-			return new Vector3(left - right, 0, bottom - top);
+			return new Vector3(left - right, 0, bottom - top).normalized;
 		}
 
 		return Vector3.zero;
 	}
 
-	public Vector3 getDirection(float x, float y, float z) {
+	public Vector3 getDirection(Vector3 pos) {
 		return getDirection(
-			Mathf.FloorToInt(x / cellSize), Mathf.FloorToInt(z / cellSize)
+			Mathf.FloorToInt(pos.x / cellSize), Mathf.FloorToInt(pos.z / cellSize)
 		);
 	}
 

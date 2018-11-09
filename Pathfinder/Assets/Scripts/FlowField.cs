@@ -20,9 +20,10 @@ public class FlowField {
 	public const float SQRT_2 = 1.41421356f;
 
 	private int width, height;
-	private float[,] integratorField;
 	private int[,] obstacleField;
-	private bool[,] visited;
+	private float[,] integratorField;
+	private float[,] unitField;
+	private bool[,] visitedField;
 	private GameObject[,] debugCylinders;
 
 	private int cellSize;
@@ -40,14 +41,17 @@ public class FlowField {
 		height = obstacleField.GetLength(1);
 		this.cellSize = cellSize;
 
-		integratorField = new float[width, height];
-		visited = new bool[width, height];
-		debugCylinders = new GameObject[width, height];
+		this.obstacleField = obstacleField;
+		this.integratorField = new float[width, height];
+		this.unitField = new float[width, height];
+		this.visitedField = new bool[width, height];
+		this.debugCylinders = new GameObject[width, height];
 
 		for (int x = 0; x < width; x++) {
 			for (int z = 0; z < height; z++) {
-				integratorField[x, z] = float.MaxValue;
-				visited[x, z] = false;
+				this.integratorField[x, z] = float.MaxValue;
+				this.unitField[x, z] = 0;
+				this.visitedField[x, z] = false;
 
 				if (DEBUG) {
 					float px = x + 0.5f;
@@ -62,15 +66,8 @@ public class FlowField {
 			}
 		}
 
-		this.obstacleField = obstacleField;
+		Generate(goalX, goalZ);
 
-		searchQueue = new Queue<Node>();
-		searchQueue.Enqueue( new Node(goalX, goalZ, 0.0f) );
-
-		while (searchQueue.Count > 0) {
-			Node node = searchQueue.Dequeue();
-			integrate(node.x, node.z, node.cost);
-		}
 		//integratorField[goalX, goalZ] = -5.0f;
 
 		for (int x = 0; x < width; x++) {
@@ -80,20 +77,27 @@ public class FlowField {
 		}
 	}
 
-	private void integrate(int x, int z, float cost) {
-		if (!isInside(x, z)) {
-			return;
-		}
+	private void Generate(int goalX, int goalZ) {
+		searchQueue = new Queue<Node>();
+		searchQueue.Enqueue( new Node(goalX, goalZ, 0.0f) );
 
-		if (integratorField[x, z] != float.MaxValue) {
-			return;
+		while (searchQueue.Count > 0) {
+			Node node = searchQueue.Dequeue();
+			Integrate(node.x, node.z, node.cost);
 		}
+	}
 
-		if (obstacleField[x, z] != 0) {
+	private void Integrate(int x, int z, float cost) {
+		if (!IsInside(x, z))
 			return;
-		}
 
-		visited[x, z] = true;
+		if (visitedField[x, z])
+			return;
+
+		if (obstacleField[x, z] != 0)
+			return;
+
+		visitedField[x, z] = true;
 		integratorField[x,z] = cost;
 
 		searchQueue.Enqueue( new Node(x + 1, z, cost + 1) );
@@ -106,15 +110,22 @@ public class FlowField {
 		searchQueue.Enqueue( new Node(x + 1, z - 1, cost + SQRT_2) );
 	}
 
-	public bool isAccessible(int x, int z) {
-		return isInside(x, z) && this.visited[x, z];
+	public bool IsAccessible(int x, int z) {
+		return IsInside(x, z) && this.visitedField[x, z];
 	}
 
-	public bool isAccessible(float x, float z) {
-		return isAccessible((int)x, (int)z);
+	public bool IsAccessible(float x, float z) {
+		return IsAccessible((int)x, (int)z);
 	}
 
-	public float getCost(float fx, float fz) {
+	private float Get(int x, int z, bool withUnits=true) {
+		if (withUnits)
+			return this.integratorField[x, z] + this.unitField[x, z];
+		else
+			return this.integratorField[x, z];
+	}
+
+	public float GetCost(float fx, float fz, bool withUnits=true) {
 		fx -= 0.5f;
 		fz -= 0.5f;
 		int ix = Mathf.FloorToInt(fx);
@@ -123,40 +134,65 @@ public class FlowField {
 		float lowestCost = float.MaxValue;
 		for (int dx = ix; dx <= ix+1; dx++)
 			for (int dz = iz; dz <= iz+1; dz++)
-				if (isAccessible(dx, dz))
-					lowestCost = Mathf.Min( lowestCost, this.integratorField[dx, dz] );
+				if (IsAccessible(dx, dz))
+					lowestCost = Mathf.Min( lowestCost, Get(dx, dz, withUnits) );
 
-		float obstacleCost = lowestCost + 10.0f;
-		float A = isAccessible(ix+0, iz+0) ? this.integratorField[ix+0, iz+0] : obstacleCost;
-		float B = isAccessible(ix+1, iz+0) ? this.integratorField[ix+1, iz+0] : obstacleCost;
-		float C = isAccessible(ix+1, iz+1) ? this.integratorField[ix+1, iz+1] : obstacleCost;
-		float D = isAccessible(ix+0, iz+1) ? this.integratorField[ix+0, iz+1] : obstacleCost;
+		float obstacleCost = lowestCost + 4.0f;
+		float A = IsAccessible(ix+0, iz+0) ? Get(ix+0, iz+0, withUnits) : obstacleCost;
+		float B = IsAccessible(ix+1, iz+0) ? Get(ix+1, iz+0, withUnits) : obstacleCost;
+		float C = IsAccessible(ix+1, iz+1) ? Get(ix+1, iz+1, withUnits) : obstacleCost;
+		float D = IsAccessible(ix+0, iz+1) ? Get(ix+0, iz+1, withUnits) : obstacleCost;
 
 		float value = Utils.QuadLerp( A, B, C, D, fx - ix, fz - iz );
-		return value;
+		return Mathf.Max( value, 0 );
 	}
 
-	public Vector3 getDirection(float x, float z) {
-		if (isAccessible(x, z))
+	public Vector3 GetDirection(float x, float z) {
+		if (IsAccessible(x, z))
 		{
 			float d = 0.1f;
-			float left   = getCost( x-d, z );
-			float right  = getCost( x+d, z );
-			float bottom = getCost( x, z-d );
-			float top    = getCost( x, z+d );
+			float left   = GetCost( x-d, z );
+			float right  = GetCost( x+d, z );
+			float bottom = GetCost( x, z-d );
+			float top    = GetCost( x, z+d );
 
-			return new Vector3(left - right, 0, bottom - top).normalized;
+			return new Vector3(left - right, 0, bottom - top) / d;
 		}
 
 		return Vector3.zero;
 	}
 
-	public Vector3 getDirection(Vector3 pos) {
-		return getDirection(pos.x, pos.z);
+	public Vector3 GetDirection(Vector3 pos) {
+		return GetDirection(pos.x, pos.z);
 	}
 
-	private bool isInside(int x, int z) {
+	private bool IsInside(int x, int z) {
 		return (x >= 0 && x < width && z >= 0 && z < height);
+	}
+
+	public void AddSeparation( Vector3 pos, float radius, float factor ) {
+		pos.Set( pos.x - 0.5f, 0, pos.z - 0.5f );
+		int ix = Mathf.RoundToInt( pos.x );
+		int iz = Mathf.RoundToInt( pos.z );
+
+		int iRad = Mathf.CeilToInt( radius );
+
+		for (int dx = ix-iRad; dx <= ix+iRad; dx++) {
+			for (int dz = iz-iRad; dz <= iz+iRad; dz++) {
+				if (IsAccessible(dx, dz)) {
+					Vector3 p = new Vector3(dx, 0, dz);
+					float d = Vector3.Distance( pos, p ) / radius;
+					//Debug.Log(radius + " (" + dx + ", " + dz + ") " + d);
+
+					//float value = Mathf.Sin(12.6f * d) / (12.6f * d);
+					float value = Mathf.Exp( -(d*d) / 0.1f );
+					//float value = Mathf.Exp( -5*d );
+
+					this.unitField[dx, dz] += factor * value;
+					this.UpdateDebugCylinder(dx, dz);
+				}
+			}
+		}
 	}
 
 	private void UpdateDebugCylinder( int x, int z ) {
@@ -164,10 +200,12 @@ public class FlowField {
 			GameObject obj = debugCylinders[x, z];
 			float px = x + 0.5f;
 			float pz = z + 0.5f;
-			float cost = getCost( px, pz );
+			float cost =  GetCost( px, pz );
+			//float cost = 1 + GetCost( px, pz ) - GetCost( px, pz, false );
+
 			if (cost < float.MaxValue) {
 				obj.transform.localScale = new Vector3( 0.5f, cost/50.0f, 0.5f );
-				float v = isAccessible( (int)px, (int)pz ) ? 1.0f : 0.3f;
+				float v = IsAccessible( (int)px, (int)pz ) ? 1.0f : 0.3f;
 				obj.GetComponent<Renderer>().material.color = Color.HSVToRGB( (cost/50.0f)%1, 1, v );
 			}
 		}

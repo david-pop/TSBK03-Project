@@ -22,7 +22,7 @@ public class WorldManager : MonoBehaviour {
 			Destroy(gameObject);
 		}
 
-		createGroundPlane();
+		CreateGroundPlane();
 
 		float seed = Random.Range(0.0f, 10000.0f);
 
@@ -76,7 +76,7 @@ public class WorldManager : MonoBehaviour {
 		}
 	}
 
-	private void createGroundPlane() {
+	private void CreateGroundPlane() {
 		GameObject plane = GameObject.CreatePrimitive(PrimitiveType.Plane);
 		plane.name = "GroundPlane";
 
@@ -102,6 +102,7 @@ public class WorldManager : MonoBehaviour {
 		return Vector3.zero;
 	}
 
+
 	public void DebugFlowfield(FlowField ff) {
 		int density = 3;
 
@@ -110,8 +111,8 @@ public class WorldManager : MonoBehaviour {
 				float offset = 0.5f / density;
 				float px = x + offset;
 				float pz = z + offset;
-				Vector3 dir = ff.getDirection( px, pz );
-				float cost = ff.getCost( px, pz );
+				Vector3 dir = ff.GetDirection( px, pz );
+				float cost = ff.GetCost( px, pz );
 
 				if (cost < float.MaxValue) {
 
@@ -126,19 +127,19 @@ public class WorldManager : MonoBehaviour {
 					if (dir.magnitude == Mathf.Infinity)
 						dir.Set(0,1,0);
 					s.z = 0.1f + dir.magnitude/6.0f;
-					s *= 3.0f / density;
+					s *= 1.0f / density;
 					newArrow.transform.localScale = s;
 					Renderer[] cs = newArrow.GetComponentsInChildren<Renderer>();
 					foreach (Renderer c in cs) {
-						c.material.color = Color.HSVToRGB((cost/100.0f)%1, 1, 1);
+						float v = ff.IsAccessible( (int)px, (int)pz ) ? 1.0f : 0.3f;
+						c.material.color = Color.HSVToRGB( (cost/100.0f)%1, 1, v );
 					}
-					//newArrow.GetComponent<Renderer>().material.color = Color.black;
 					*/
 
 					GameObject obj = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
 					obj.transform.position = new Vector3( px, 0, pz );
-					obj.transform.localScale = new Vector3( 0.5f/density, cost/10.0f, 0.5f/density );
-					float v = ff.isAccessible( (int)px, (int)pz ) ? 1.0f : 0.3f;
+					obj.transform.localScale = new Vector3( 0.5f/density, cost/50.0f, 0.5f/density );
+					float v = ff.IsAccessible( (int)px, (int)pz ) ? 1.0f : 0.3f;
 					obj.GetComponent<Renderer>().material.color = Color.HSVToRGB( (cost/10.0f)%1, 1, v );
 				}
 			}

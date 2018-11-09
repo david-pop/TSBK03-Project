@@ -3,9 +3,14 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Unit : MonoBehaviour {
-	private float speed = 2.0f;
-	private Vector3 goalPosition;
-	private FlowField ff = null;
+	private float speed = 4.0f;
+	private float separationRadius = 1.0f;
+	private float separationFactor = 2.0f;
+	private float cohesionRadius = 10.0f;
+	private float cohesionFactor = -0.1f;
+
+	private FlowField flowField = null;
+	private Vector3 velocity;
 
 
 	// Use this for initialization
@@ -14,40 +19,51 @@ public class Unit : MonoBehaviour {
 		groundPos.y = this.transform.localScale.y;
 		this.transform.position = groundPos;
 
-		this.goalPosition = this.transform.position;
+		this.velocity.Set(0, 0, 0);
 	}
 
 	// Update is called once per frame
 	void Update () {
-
 		//else if (Random.Range(0.0f, 1.0f) < 0.02) {
 		//	this.goalPosition += new Vector3(Random.Range(-1, 2), 0, Random.Range(-1, 2));
 		//}
 
-		if(ff != null){
-			Vector3 dir = this.ff.getDirection(this.transform.position);
-            if (dir.sqrMagnitude > 0)
-            {
-                this.transform.forward = dir;
-                this.goalPosition = this.transform.position + dir;
+		if (this.flowField != null) {
 
-                Vector3 newPos = Vector3.MoveTowards(this.transform.position, this.goalPosition, this.speed * Time.deltaTime);
-                this.transform.position = newPos;
-            }
-            else
-            {
-                ff = null;
-            }
+			this.flowField.AddSeparation( this.transform.position, this.separationRadius, -this.separationFactor );
+			//this.flowField.AddSeparation( this.transform.position, this.cohesionRadius, -this.cohesionFactor );
+
+			Vector3 dir = this.flowField.GetDirection(this.transform.position);
+			this.velocity += 0.5f * dir;
+			this.velocity = Mathf.Min( this.velocity.magnitude*0.9f, this.speed ) * this.velocity.normalized;
+
+			/*
+			this.transform.position = Vector3.MoveTowards(
+				this.transform.position,
+				this.transform.position + this.velocity.normalized,
+				this.velocity.magnitude * Time.deltaTime
+			);
+			*/
+			this.transform.position += this.velocity * Time.deltaTime;
+
+			this.flowField.AddSeparation( this.transform.position, this.separationRadius, this.separationFactor );
+			//this.flowField.AddSeparation( this.transform.position, this.cohesionRadius, this.cohesionFactor );
+
+			if (this.velocity.sqrMagnitude > 0.001) {
+				this.transform.forward = this.velocity;
+			} else {
+				/*
+				this.flowField.AddSeparation( this.transform.position, this.separationRadius, -this.separationFactor );
+				this.flowField.AddSeparation( this.transform.position, this.cohesionRadius, -this.cohesionFactor );
+				this.flowField = null;
+				*/
+			}
 		}
 	}
 
-	public void SetGoalPosition(Vector3 goal) {
-		goal.y = this.transform.localScale.y;
-		this.goalPosition = goal;
-	}
-
-	public void setFlowField(FlowField ff){
-		this.ff = ff;
-		SetGoalPosition(this.transform.position);
+	public void setFlowField(FlowField flowField){
+		this.flowField = flowField;
+		this.flowField.AddSeparation( this.transform.position, this.separationRadius, this.separationFactor );
+		//this.flowField.AddSeparation( this.transform.position, this.cohesionRadius, this.cohesionFactor );
 	}
 }

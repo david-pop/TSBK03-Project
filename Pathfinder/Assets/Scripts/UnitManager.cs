@@ -19,7 +19,7 @@ public class UnitManager : MonoBehaviour {
 		units = new List<GameObject>();
 		selectedUnits = new List<GameObject>();
 
-		int unitCount = 1000;
+		int unitCount = 100;
 
 		while (unitCount > 0) {
 			int x = Random.Range(0, WorldManager.Instance.GridSize);

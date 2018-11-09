@@ -16,12 +16,15 @@ public struct Node {
 }
 
 public class FlowField {
+	public const bool DEBUG = false;
 	public const float SQRT_2 = 1.41421356f;
 
 	private int width, height;
 	private float[,] integratorField;
 	private int[,] obstacleField;
 	private bool[,] visited;
+	private GameObject[,] debugCylinders;
+
 	private int cellSize;
 	private Queue<Node> searchQueue;
 
@@ -39,11 +42,23 @@ public class FlowField {
 
 		integratorField = new float[width, height];
 		visited = new bool[width, height];
+		debugCylinders = new GameObject[width, height];
 
 		for (int x = 0; x < width; x++) {
 			for (int z = 0; z < height; z++) {
 				integratorField[x, z] = float.MaxValue;
 				visited[x, z] = false;
+
+				if (DEBUG) {
+					float px = x + 0.5f;
+					float pz = z + 0.5f;
+					GameObject obj = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+					debugCylinders[x, z] = obj;
+					obj.transform.position = new Vector3( px, 0, pz );
+
+					obj.transform.localScale = new Vector3( 0.5f, 0.0f, 0.5f );
+					obj.GetComponent<Renderer>().material.color = Color.black;
+				}
 			}
 		}
 
@@ -56,31 +71,16 @@ public class FlowField {
 			Node node = searchQueue.Dequeue();
 			integrate(node.x, node.z, node.cost);
 		}
+		//integratorField[goalX, goalZ] = -5.0f;
 
-		// Increases cost near walls. Doesn't work very well.
-		/*
 		for (int x = 0; x < width; x++) {
 			for (int z = 0; z < height; z++) {
-				if (isAccessible(x, z)) {
-					int wallCount = 0;
-					for (int dx = x-1; dx <= x+1; dx++) {
-						for (int dz = z-1; dz <= z+1; dz++) {
-							if (!isAccessible(dx, dz)) {
-								if (wallCount < 1)
-									this.integratorField[x, z] += 1.0f;
-								wallCount += 1;
-							}
-						}
-					}
-				}
+				UpdateDebugCylinder(x, z);
 			}
 		}
-		*/
 	}
 
 	private void integrate(int x, int z, float cost) {
-		//Debug.Log("(" + x + ", " + z + ")" + " " + cost);
-
 		if (!isInside(x, z)) {
 			return;
 		}
@@ -157,5 +157,19 @@ public class FlowField {
 
 	private bool isInside(int x, int z) {
 		return (x >= 0 && x < width && z >= 0 && z < height);
+	}
+
+	private void UpdateDebugCylinder( int x, int z ) {
+		if (DEBUG) {
+			GameObject obj = debugCylinders[x, z];
+			float px = x + 0.5f;
+			float pz = z + 0.5f;
+			float cost = getCost( px, pz );
+			if (cost < float.MaxValue) {
+				obj.transform.localScale = new Vector3( 0.5f, cost/50.0f, 0.5f );
+				float v = isAccessible( (int)px, (int)pz ) ? 1.0f : 0.3f;
+				obj.GetComponent<Renderer>().material.color = Color.HSVToRGB( (cost/50.0f)%1, 1, v );
+			}
+		}
 	}
 }

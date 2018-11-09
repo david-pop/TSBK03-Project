@@ -342,7 +342,7 @@ MonoBehaviour:
   obstacleMaterial: {fileID: 2100000, guid: cc3831aabec484c00816f98ab2ad3e24, type: 2}
   GridSize: 100
   CellSize: 1
-  arrow: {fileID: 1506627861900588, guid: 4e8b3c4d2366742558315340a9f28a9f, type: 2}
+  arrow: {fileID: 1847818108029366, guid: 4e8b3c4d2366742558315340a9f28a9f, type: 2}
 --- !u!4 &1580663488
 Transform:
   m_ObjectHideFlags: 0

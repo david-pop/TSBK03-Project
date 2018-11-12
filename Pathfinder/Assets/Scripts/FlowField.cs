@@ -29,19 +29,24 @@ public class FlowField {
 	private int cellSize;
 	private Queue<Node> searchQueue;
 
+    private int valuesPerCell;
 
-	public FlowField(int[,] obstacleField, int cellSize, float goalX, float goalZ):
+
+	public FlowField(int[,] obstacleField, int cellSize, float goalX, float goalZ, int valuesPerCell):
 	this(obstacleField, cellSize,
-		 Mathf.FloorToInt(goalX / cellSize),
-		 Mathf.FloorToInt(goalZ / cellSize)){
+         Mathf.FloorToInt(goalX / cellSize * valuesPerCell),
+         Mathf.FloorToInt(goalZ / cellSize * valuesPerCell),
+         valuesPerCell){
 	}
 
-	public FlowField(int[,] obstacleField, int cellSize, int goalX, int goalZ) {
-		width = obstacleField.GetLength(0);
-		height = obstacleField.GetLength(1);
+	private FlowField(int[,] obstacleField, int cellSize, int goalX, int goalZ, int valuesPerCell) {
 		this.cellSize = cellSize;
+        this.valuesPerCell = valuesPerCell;
 
-		this.obstacleField = obstacleField;
+        width = obstacleField.GetLength(0) * valuesPerCell;
+        height = obstacleField.GetLength(1) * valuesPerCell;
+
+        this.obstacleField = obstacleField;
 		this.integratorField = new float[width, height];
 		this.unitField = new float[width, height];
 		this.visitedField = new bool[width, height];
@@ -58,9 +63,9 @@ public class FlowField {
 					float pz = z + 0.5f;
 					GameObject obj = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
 					debugCylinders[x, z] = obj;
-					obj.transform.position = new Vector3( px, 0, pz );
+                    obj.transform.position = new Vector3( px / valuesPerCell, 0, pz / valuesPerCell );
 
-					obj.transform.localScale = new Vector3( 0.5f, 0.0f, 0.5f );
+                    obj.transform.localScale = new Vector3( 0.5f / valuesPerCell, 0.0f, 0.5f / valuesPerCell);
 					obj.GetComponent<Renderer>().material.color = Color.black;
 				}
 			}
@@ -94,7 +99,7 @@ public class FlowField {
 		if (visitedField[x, z])
 			return;
 
-		if (obstacleField[x, z] != 0)
+        if (obstacleField[(int)(x / valuesPerCell), (int)(z / valuesPerCell)] != 0)
 			return;
 
 		visitedField[x, z] = true;
@@ -148,9 +153,12 @@ public class FlowField {
 	}
 
 	public Vector3 GetDirection(float x, float z) {
+        x *= valuesPerCell;
+        z *= valuesPerCell;
+
 		if (IsAccessible(x, z))
 		{
-			float d = 0.1f;
+            float d = 0.1f;
 			float left   = GetCost( x-d, z );
 			float right  = GetCost( x+d, z );
 			float bottom = GetCost( x, z-d );
@@ -171,6 +179,9 @@ public class FlowField {
 	}
 
 	public void AddSeparation( Vector3 pos, float radius, float factor ) {
+        pos *= valuesPerCell;
+        radius *= valuesPerCell;
+
 		pos.Set( pos.x - 0.5f, 0, pos.z - 0.5f );
 		int ix = Mathf.RoundToInt( pos.x );
 		int iz = Mathf.RoundToInt( pos.z );
@@ -198,13 +209,13 @@ public class FlowField {
 	private void UpdateDebugCylinder( int x, int z ) {
 		if (DEBUG) {
 			GameObject obj = debugCylinders[x, z];
-			float px = x + 0.5f;
-			float pz = z + 0.5f;
+			float px = x + 0.5f * (1 / valuesPerCell);
+			float pz = z + 0.5f * (1 / valuesPerCell);
 			float cost =  GetCost( px, pz );
 			//float cost = 1 + GetCost( px, pz ) - GetCost( px, pz, false );
 
 			if (cost < float.MaxValue) {
-				obj.transform.localScale = new Vector3( 0.5f, cost/50.0f, 0.5f );
+                obj.transform.localScale = new Vector3( 0.5f / valuesPerCell, cost/50.0f, 0.5f / valuesPerCell );
 				float v = IsAccessible( (int)px, (int)pz ) ? 1.0f : 0.3f;
 				obj.GetComponent<Renderer>().material.color = Color.HSVToRGB( (cost/50.0f)%1, 1, v );
 			}

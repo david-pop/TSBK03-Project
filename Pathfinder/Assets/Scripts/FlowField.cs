@@ -16,46 +16,45 @@ public struct Node {
 }
 
 public class FlowField {
-	public const bool DEBUG = false;
+    public const bool DEBUG = false;
 	public const float SQRT_2 = 1.41421356f;
 
 	private int width, height;
 	private int[,] obstacleField;
 	private float[,] integratorField;
-	private float[,] unitField;
+	public static float[,] unitField;
 	private bool[,] visitedField;
 	private GameObject[,] debugCylinders;
-
 	private int cellSize;
 	private Queue<Node> searchQueue;
 
-    private int valuesPerCell;
+    private static int valuesPerCell = 3;
 
-
-	public FlowField(int[,] obstacleField, int cellSize, float goalX, float goalZ, int valuesPerCell):
+	public FlowField(int[,] obstacleField, int cellSize, float goalX, float goalZ):
 	this(obstacleField, cellSize,
          Mathf.FloorToInt(goalX / cellSize * valuesPerCell),
-         Mathf.FloorToInt(goalZ / cellSize * valuesPerCell),
-         valuesPerCell){
+         Mathf.FloorToInt(goalZ / cellSize * valuesPerCell)){
 	}
 
-	private FlowField(int[,] obstacleField, int cellSize, int goalX, int goalZ, int valuesPerCell) {
-		this.cellSize = cellSize;
-        this.valuesPerCell = valuesPerCell;
+	private FlowField(int[,] obstacleField, int cellSize, int goalX, int goalZ) {
+        this.cellSize = cellSize;
 
         width = obstacleField.GetLength(0) * valuesPerCell;
         height = obstacleField.GetLength(1) * valuesPerCell;
 
+        if (unitField == null)
+        {
+            unitField = new float[width, height];
+        }
+
         this.obstacleField = obstacleField;
 		this.integratorField = new float[width, height];
-		this.unitField = new float[width, height];
 		this.visitedField = new bool[width, height];
 		this.debugCylinders = new GameObject[width, height];
 
 		for (int x = 0; x < width; x++) {
 			for (int z = 0; z < height; z++) {
 				this.integratorField[x, z] = float.MaxValue;
-				this.unitField[x, z] = 0;
 				this.visitedField[x, z] = false;
 
 				if (DEBUG) {
@@ -125,7 +124,7 @@ public class FlowField {
 
 	private float Get(int x, int z, bool withUnits=true) {
 		if (withUnits)
-			return this.integratorField[x, z] + this.unitField[x, z];
+			return this.integratorField[x, z] + unitField[x, z];
 		else
 			return this.integratorField[x, z];
 	}
@@ -178,7 +177,7 @@ public class FlowField {
 		return (x >= 0 && x < width && z >= 0 && z < height);
 	}
 
-	public void AddSeparation( Vector3 pos, float radius, float factor ) {
+	public static void AddUnit( Vector3 pos, float radius, float factor ) {
         pos *= valuesPerCell;
         radius *= valuesPerCell;
 
@@ -190,23 +189,26 @@ public class FlowField {
 
 		for (int dx = ix-iRad; dx <= ix+iRad; dx++) {
 			for (int dz = iz-iRad; dz <= iz+iRad; dz++) {
-				if (IsAccessible(dx, dz)) {
-					Vector3 p = new Vector3(dx, 0, dz);
-					float d = Vector3.Distance( pos, p ) / radius;
-					//Debug.Log(radius + " (" + dx + ", " + dz + ") " + d);
+				Vector3 p = new Vector3(dx, 0, dz);
+				float d = Vector3.Distance( pos, p ) / radius;
+				//Debug.Log(radius + " (" + dx + ", " + dz + ") " + d);
 
-					//float value = Mathf.Sin(12.6f * d) / (12.6f * d);
-					float value = Mathf.Exp( -(d*d) / 0.1f );
-					//float value = Mathf.Exp( -5*d );
+				//float value = Mathf.Sin(12.6f * d) / (12.6f * d);
+				float value = Mathf.Exp( -(d*d) / 0.1f );
+				//float value = Mathf.Exp( -5*d );
 
-					this.unitField[dx, dz] += factor * value;
-					this.UpdateDebugCylinder(dx, dz);
-				}
+				unitField[dx, dz] += factor * value;
+				//this.UpdateDebugCylinder(dx, dz);
 			}
 		}
 	}
 
-	private void UpdateDebugCylinder( int x, int z ) {
+    public static void RemoveUnit(Vector3 pos, float radius, float factor)
+    {
+        FlowField.AddUnit(pos, radius, -factor);
+    }
+
+        private void UpdateDebugCylinder( int x, int z ) {
 		if (DEBUG) {
 			GameObject obj = debugCylinders[x, z];
 			float px = x + 0.5f * (1 / valuesPerCell);

@@ -53,14 +53,14 @@ public class UnitManager : MonoBehaviour {
 			FlowField ff = new FlowField(
 				WorldManager.Instance.worldGrid,
 				WorldManager.Instance.CellSize,
-				pos.x, pos.z, 3);
+				pos.x, pos.z);
 
-			foreach(GameObject unit in selectedUnits){
+            foreach (GameObject unit in selectedUnits){
 				Unit obj = unit.GetComponent<Unit>();
 				obj.setFlowField(ff);
 			}
 		}
-	}
+    }
 
 	void OnGUI() {
 		if( isSelecting )

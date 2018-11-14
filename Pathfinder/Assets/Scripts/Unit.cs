@@ -29,8 +29,10 @@ public class Unit : MonoBehaviour {
 		//}
 
 		if (this.flowField != null) {
+            FlowField.RemoveUnit(this.transform.position, this.separationRadius, this.separationFactor);
+            
 
-			this.flowField.AddSeparation( this.transform.position, this.separationRadius, -this.separationFactor );
+            //this.flowField.AddSeparation( this.transform.position, this.separationRadius, -this.separationFactor );
 			//this.flowField.AddSeparation( this.transform.position, this.cohesionRadius, -this.cohesionFactor );
 
 			Vector3 dir = this.flowField.GetDirection(this.transform.position);
@@ -46,7 +48,10 @@ public class Unit : MonoBehaviour {
 			*/
 			this.transform.position += this.velocity * Time.deltaTime;
 
-			this.flowField.AddSeparation( this.transform.position, this.separationRadius, this.separationFactor );
+            FlowField.AddUnit(this.transform.position, this.separationRadius, this.separationFactor);
+            
+
+            //this.flowField.AddSeparation( this.transform.position, this.separationRadius, this.separationFactor );
 			//this.flowField.AddSeparation( this.transform.position, this.cohesionRadius, this.cohesionFactor );
 
 			if (this.velocity.sqrMagnitude > 0.001) {
@@ -62,8 +67,14 @@ public class Unit : MonoBehaviour {
 	}
 
 	public void setFlowField(FlowField flowField){
-		this.flowField = flowField;
-		this.flowField.AddSeparation( this.transform.position, this.separationRadius, this.separationFactor );
+        if(this.flowField == null){
+            FlowField.AddUnit(this.transform.position, this.separationRadius, this.separationFactor);
+        }
+
+        this.flowField = flowField;
+        
+
+        //this.flowField.AddSeparation( this.transform.position, this.separationRadius, this.separationFactor );
 		//this.flowField.AddSeparation( this.transform.position, this.cohesionRadius, this.cohesionFactor );
 	}
 }

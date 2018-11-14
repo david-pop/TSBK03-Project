@@ -14,6 +14,10 @@ public class UnitManager : MonoBehaviour {
 	private bool isSelecting = false;
 	private Vector3 mousePosition1;
 
+    private const int NUM_CONTROL_GROUPS = 10;
+    private List<GameObject>[] controlGroups = 
+        new List<GameObject>[NUM_CONTROL_GROUPS];
+
 	// Use this for initialization
 	void Start () {
 		units = new List<GameObject>();
@@ -66,7 +70,24 @@ public class UnitManager : MonoBehaviour {
 			Utils.DrawScreenRect( rect, new Color( 0.8f, 0.1f, 0.0f, 0.1f ) );
 			Utils.DrawScreenRectBorder( rect, 2, new Color( 0.8f, 0.1f, 0.0f, 1.0f ) );
 		}
-	}
+
+        KeyCode pressedKey = Event.current.keyCode;
+        bool isKeyDown = Event.current.type == EventType.KeyDown;
+        bool isControlDown = Event.current.control;
+
+        if (isKeyDown && 
+           pressedKey >= KeyCode.Alpha0 && 
+           pressedKey <= KeyCode.Alpha9){
+
+            int groupIndex = pressedKey - KeyCode.Alpha0;
+
+            if(isControlDown){
+                controlGroups[groupIndex] = new List<GameObject>(selectedUnits);
+            }else{
+                selectUnits(controlGroups[groupIndex]);
+            }
+        }
+    }
 
 	private void createUnitAtPosition(Vector3 pos){
 		GameObject newUnit = Instantiate(unitPrefab);
@@ -90,4 +111,19 @@ public class UnitManager : MonoBehaviour {
 			}
 		}
 	}
+
+    private void selectUnits(List<GameObject> unitsToSelect){
+        foreach (GameObject unit in selectedUnits)
+        {
+            unit.GetComponent<MeshRenderer>().material = defaultUnitMaterial;
+        }
+        selectedUnits.Clear();
+        selectedUnits = new List<GameObject>(unitsToSelect);
+
+        foreach (GameObject unit in unitsToSelect)
+        {
+            selectedUnits.Add(unit);
+            unit.GetComponent<MeshRenderer>().material = selectedUnitMaterial;
+        }
+    }
 }

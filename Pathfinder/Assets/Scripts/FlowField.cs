@@ -172,8 +172,8 @@ public class FlowField {
 	public static void AddUnit( Vector3 pos, float radius, float factor ) {
 		pos *= valuesPerCell;
 		radius *= valuesPerCell;
-		//float offset = 0.5f;
-		//pos.Set( pos.x - offset, 0, pos.z - offset );
+		float offset = 0.5f;
+		pos.Set( pos.x - offset, 0, pos.z - offset );
 
 		int ix = Mathf.RoundToInt( pos.x );
 		int iz = Mathf.RoundToInt( pos.z );

@@ -4,13 +4,14 @@ using UnityEngine;
 
 public class Unit : MonoBehaviour {
 	private float speed = 4.0f;
-	private float separationRadius = 1.0f;
+	private float separationRadius = 2.0f;
 	private float separationFactor = 2.0f;
 	//private float cohesionRadius = 10.0f;
 	//private float cohesionFactor = -0.1f;
 
 	private FlowField flowField = null;
 	private Vector3 velocity;
+    private float unitRadius = 0.25f;
 
 
 	// Use this for initialization
@@ -39,18 +40,46 @@ public class Unit : MonoBehaviour {
 			this.velocity += 0.5f * dir;
 			this.velocity = Mathf.Min( this.velocity.magnitude*0.9f, this.speed ) * this.velocity.normalized;
 
-			/*
+            /*
 			this.transform.position = Vector3.MoveTowards(
 				this.transform.position,
 				this.transform.position + this.velocity.normalized,
 				this.velocity.magnitude * Time.deltaTime
 			);
 			*/
-			this.transform.position += this.velocity * Time.deltaTime;
+            float unitX = this.transform.position.x;
+            float unitZ = this.transform.position.z;
+
+            float newUnitX = unitX + this.velocity.x * Time.deltaTime;
+            float newUnitZ = unitZ + this.velocity.z * Time.deltaTime;
+
+            Vector3 radVec = this.velocity.normalized * unitRadius;
+
+            float testUnitX = newUnitX + radVec.x;
+            float testUnitZ = newUnitZ + radVec.z;
+
+
+
+
+            if (WorldManager.Instance.worldGrid[(int)testUnitX, (int)unitZ] != 0){
+                newUnitX = Mathf.Max((int)testUnitX, (int)unitX) - radVec.x;
+            }
+
+            if (WorldManager.Instance.worldGrid[(int)unitX, (int)testUnitZ] != 0){
+                newUnitZ = Mathf.Max((int)testUnitZ, (int)unitZ) - radVec.z;
+            }
+
+            //else if (WorldManager.Instance.worldGrid[(int)testUnitX, (int)testUnitZ] != 0)
+            //{
+            //    newUnitX = Mathf.Max((int)testUnitX, (int)unitX) - radVec.x;
+            //    newUnitZ = Mathf.Max((int)testUnitZ, (int)unitZ) - radVec.z;
+            //}
+
+            this.transform.position = new Vector3(newUnitX, this.transform.position.y, newUnitZ);
+
 
             FlowField.AddUnit(this.transform.position, this.separationRadius, this.separationFactor);
             
-
             //this.flowField.AddSeparation( this.transform.position, this.separationRadius, this.separationFactor );
 			//this.flowField.AddSeparation( this.transform.position, this.cohesionRadius, this.cohesionFactor );
 

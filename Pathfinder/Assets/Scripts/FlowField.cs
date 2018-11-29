@@ -128,12 +128,17 @@ public class FlowField {
 		int iz = Mathf.FloorToInt(fz);
 
 		float lowestCost = float.MaxValue;
+        float maxCost = float.MinValue;
+
 		for (int dx = ix; dx <= ix+1; dx++)
 			for (int dz = iz; dz <= iz+1; dz++)
-				if (IsAccessible(dx, dz))
-					lowestCost = Mathf.Min( lowestCost, Get(dx, dz, withUnits) );
+                if (IsAccessible(dx, dz)){
+                    lowestCost = Mathf.Min(lowestCost, Get(dx, dz, withUnits));
+                    maxCost = Mathf.Max(maxCost, Get(dx, dz, withUnits));
+                }
 
-		float obstacleCost = lowestCost + 4.0f;
+
+        float obstacleCost = maxCost + 0.0f;
 		float A = IsAccessible(ix+0, iz+0) ? Get(ix+0, iz+0, withUnits) : obstacleCost;
 		float B = IsAccessible(ix+1, iz+0) ? Get(ix+1, iz+0, withUnits) : obstacleCost;
 		float C = IsAccessible(ix+1, iz+1) ? Get(ix+1, iz+1, withUnits) : obstacleCost;
@@ -144,12 +149,13 @@ public class FlowField {
 	}
 
 	public Vector3 GetDirection(float x, float z) {
-		x *= valuesPerCell;
-		z *= valuesPerCell;
+        x *= valuesPerCell;
+        z *= valuesPerCell;
 
-		if (IsAccessible(x, z))
-		{
-			float d = 0.1f;
+        //if (IsAccessible(x, z))
+        if (true)
+        {
+            float d = 0.1f;
 			float left   = GetCost( x-d, z );
 			float right  = GetCost( x+d, z );
 			float bottom = GetCost( x, z-d );

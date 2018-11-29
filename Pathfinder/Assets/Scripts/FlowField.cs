@@ -18,7 +18,7 @@ public struct Node {
 public class FlowField {
 	public const float SQRT_2 = 1.41421356f;
 
-	private int width, height;
+	public static int  width, height;
 	private int[,] obstacleField;
 	private float[,] integratorField;
 	public static float[,] unitField;
@@ -26,25 +26,25 @@ public class FlowField {
 
 	private Queue<Node> searchQueue;
 
-    private static int valuesPerCell = 3;
+	private static int valuesPerCell = 3;
 
 
 	public FlowField(int[,] obstacleField, int cellSize, float goalX, float goalZ):
 	this(obstacleField, cellSize,
-         Mathf.FloorToInt(goalX / cellSize * valuesPerCell),
-         Mathf.FloorToInt(goalZ / cellSize * valuesPerCell)){
+		 Mathf.FloorToInt(goalX / cellSize * valuesPerCell),
+		 Mathf.FloorToInt(goalZ / cellSize * valuesPerCell)){
 	}
 
 	private FlowField(int[,] obstacleField, int cellSize, int goalX, int goalZ) {
-        width = obstacleField.GetLength(0) * valuesPerCell;
-        height = obstacleField.GetLength(1) * valuesPerCell;
+		width = obstacleField.GetLength(0) * valuesPerCell;
+		height = obstacleField.GetLength(1) * valuesPerCell;
 
-        if (unitField == null)
-        {
-            unitField = new float[width, height];
-        }
+		if (unitField == null)
+		{
+			unitField = new float[width, height];
+		}
 
-        this.obstacleField = obstacleField;
+		this.obstacleField = obstacleField;
 		this.integratorField = new float[width, height];
 		this.visitedField = new bool[width, height];
 
@@ -69,6 +69,12 @@ public class FlowField {
 		}
 	}
 
+	public static void InitUnitField(){
+		int width = WorldManager.Instance.GridSize * valuesPerCell;
+		int height = WorldManager.Instance.GridSize * valuesPerCell;
+		unitField = new float[width, height];
+	}
+
 	private void Generate(int goalX, int goalZ) {
 		searchQueue = new Queue<Node>();
 		searchQueue.Enqueue( new Node(goalX, goalZ, 0.0f) );
@@ -86,7 +92,7 @@ public class FlowField {
 		if (visitedField[x, z])
 			return;
 
-        if (obstacleField[(int)(x / valuesPerCell), (int)(z / valuesPerCell)] != 0)
+		if (obstacleField[(int)(x / valuesPerCell), (int)(z / valuesPerCell)] != 0)
 			return;
 
 		visitedField[x, z] = true;
@@ -140,12 +146,12 @@ public class FlowField {
 	}
 
 	public Vector3 GetDirection(float x, float z) {
-        x *= valuesPerCell;
-        z *= valuesPerCell;
+		x *= valuesPerCell;
+		z *= valuesPerCell;
 
 		if (IsAccessible(x, z))
 		{
-            float d = 0.1f;
+			float d = 0.1f;
 			float left   = GetCost( x-d, z );
 			float right  = GetCost( x+d, z );
 			float bottom = GetCost( x, z-d );
@@ -161,13 +167,13 @@ public class FlowField {
 		return GetDirection(pos.x, pos.z);
 	}
 
-	private bool IsInside(int x, int z) {
+	private static bool IsInside(int x, int z) {
 		return (x >= 0 && x < width && z >= 0 && z < height);
 	}
 
 	public static void AddUnit( Vector3 pos, float radius, float factor ) {
-        pos *= valuesPerCell;
-        radius *= valuesPerCell;
+		pos *= valuesPerCell;
+		radius *= valuesPerCell;
 		//float offset = 0.5f;
 		//pos.Set( pos.x - offset, 0, pos.z - offset );
 
@@ -178,23 +184,24 @@ public class FlowField {
 
 		for (int dx = ix-iRad; dx <= ix+iRad; dx++) {
 			for (int dz = iz-iRad; dz <= iz+iRad; dz++) {
-				//if (IsAccessible(dx, dz)) {
+				if(IsInside(dx, dz)){
 					Vector3 p = new Vector3(dx, 0, dz);
-					float d = Vector3.Distance( pos, p ) / radius;
+					float d = Vector3.Distance(pos, p) / radius;
 					//Debug.Log(radius + " (" + dx + ", " + dz + ") " + d);
 
 					//float value = Mathf.Sin(12.6f * d) / (12.6f * d);
-					float value = Mathf.Exp( -(d*d) / 0.1f );
+					float value = Mathf.Exp(-(d * d) / 0.1f);
 					//float value = Mathf.Exp( -5*d );
 
 					unitField[dx, dz] += factor * value;
-				//}
+					//this.UpdateDebugCylinder(dx, dz);
+				}
 			}
 		}
 	}
 
-    public static void RemoveUnit(Vector3 pos, float radius, float factor)
-    {
-        FlowField.AddUnit(pos, radius, -factor);
-    }
+	public static void RemoveUnit(Vector3 pos, float radius, float factor)
+	{
+		FlowField.AddUnit(pos, radius, -factor);
+	}
 }

@@ -297,7 +297,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   selectedUnitMaterial: {fileID: 2100000, guid: 3fb2d974597974778ba46da66c3ef281,
     type: 2}
-  defaultUnitMaterial: {fileID: 10302, guid: 0000000000000000f000000000000000, type: 0}
+  defaultUnitMaterial: {fileID: 10302, guid: 0000000000000000f000000000000000, type: 3}
   unitPrefab: {fileID: 1433447234506120, guid: 71ef3da247845491f8e74fe5a9786f6f, type: 2}
 --- !u!4 &1458176833
 Transform:
@@ -342,7 +342,12 @@ MonoBehaviour:
   obstacleMaterial: {fileID: 2100000, guid: cc3831aabec484c00816f98ab2ad3e24, type: 2}
   GridSize: 50
   CellSize: 1
-  arrow: {fileID: 1847818108029366, guid: 4e8b3c4d2366742558315340a9f28a9f, type: 2}
+  CellDensity: 3
+  wallMesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+  wallMaterial: {fileID: 2100000, guid: cc3831aabec484c00816f98ab2ad3e24, type: 2}
+  debugShape: {fileID: 1374332266492752, guid: f51c568f5da004ac1bc653f9e30155ed, type: 2}
+  debugMesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+  debugMaterial: {fileID: 2100000, guid: bab57c64da4334cbf8a0c7e49e9fb1c5, type: 2}
 --- !u!4 &1580663488
 Transform:
   m_ObjectHideFlags: 0

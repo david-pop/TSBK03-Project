@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,8 +6,8 @@ public class Unit : MonoBehaviour {
 	private float speed = 4.0f;
 	private float separationRadius = 1.0f;
 	private float separationFactor = 2.0f;
-	private float cohesionRadius = 10.0f;
-	private float cohesionFactor = -0.1f;
+	//private float cohesionRadius = 10.0f;
+	//private float cohesionFactor = -0.1f;
 
 	private FlowField flowField = null;
 	private Vector3 velocity;

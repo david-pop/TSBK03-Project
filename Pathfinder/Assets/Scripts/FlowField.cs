@@ -16,7 +16,6 @@ public struct Node {
 }
 
 public class FlowField {
-    public const bool DEBUG = false;
 	public const float SQRT_2 = 1.41421356f;
 
 	private int width, height;
@@ -24,11 +23,11 @@ public class FlowField {
 	private float[,] integratorField;
 	public static float[,] unitField;
 	private bool[,] visitedField;
-	private GameObject[,] debugCylinders;
-	private int cellSize;
+
 	private Queue<Node> searchQueue;
 
     private static int valuesPerCell = 3;
+
 
 	public FlowField(int[,] obstacleField, int cellSize, float goalX, float goalZ):
 	this(obstacleField, cellSize,
@@ -37,8 +36,6 @@ public class FlowField {
 	}
 
 	private FlowField(int[,] obstacleField, int cellSize, int goalX, int goalZ) {
-        this.cellSize = cellSize;
-
         width = obstacleField.GetLength(0) * valuesPerCell;
         height = obstacleField.GetLength(1) * valuesPerCell;
 
@@ -50,33 +47,24 @@ public class FlowField {
         this.obstacleField = obstacleField;
 		this.integratorField = new float[width, height];
 		this.visitedField = new bool[width, height];
-		this.debugCylinders = new GameObject[width, height];
 
 		for (int x = 0; x < width; x++) {
 			for (int z = 0; z < height; z++) {
 				this.integratorField[x, z] = float.MaxValue;
 				this.visitedField[x, z] = false;
-
-				if (DEBUG) {
-					float px = x + 0.5f;
-					float pz = z + 0.5f;
-					GameObject obj = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-					debugCylinders[x, z] = obj;
-                    obj.transform.position = new Vector3( px / valuesPerCell, 0, pz / valuesPerCell );
-
-                    obj.transform.localScale = new Vector3( 0.5f / valuesPerCell, 0.0f, 0.5f / valuesPerCell);
-					obj.GetComponent<Renderer>().material.color = Color.black;
-				}
 			}
 		}
 
-		Generate(goalX, goalZ);
+		Generate(
+			(int)(goalX * valuesPerCell),
+			(int)(goalZ * valuesPerCell)
+		);
 
 		//integratorField[goalX, goalZ] = -5.0f;
 
 		for (int x = 0; x < width; x++) {
 			for (int z = 0; z < height; z++) {
-				UpdateDebugCylinder(x, z);
+				WorldManager.Instance.UpdateDebugShape(x, z, this);
 			}
 		}
 	}
@@ -180,8 +168,9 @@ public class FlowField {
 	public static void AddUnit( Vector3 pos, float radius, float factor ) {
         pos *= valuesPerCell;
         radius *= valuesPerCell;
+		//float offset = 0.5f;
+		//pos.Set( pos.x - offset, 0, pos.z - offset );
 
-		pos.Set( pos.x - 0.5f, 0, pos.z - 0.5f );
 		int ix = Mathf.RoundToInt( pos.x );
 		int iz = Mathf.RoundToInt( pos.z );
 
@@ -189,16 +178,17 @@ public class FlowField {
 
 		for (int dx = ix-iRad; dx <= ix+iRad; dx++) {
 			for (int dz = iz-iRad; dz <= iz+iRad; dz++) {
-				Vector3 p = new Vector3(dx, 0, dz);
-				float d = Vector3.Distance( pos, p ) / radius;
-				//Debug.Log(radius + " (" + dx + ", " + dz + ") " + d);
+				//if (IsAccessible(dx, dz)) {
+					Vector3 p = new Vector3(dx, 0, dz);
+					float d = Vector3.Distance( pos, p ) / radius;
+					//Debug.Log(radius + " (" + dx + ", " + dz + ") " + d);
 
-				//float value = Mathf.Sin(12.6f * d) / (12.6f * d);
-				float value = Mathf.Exp( -(d*d) / 0.1f );
-				//float value = Mathf.Exp( -5*d );
+					//float value = Mathf.Sin(12.6f * d) / (12.6f * d);
+					float value = Mathf.Exp( -(d*d) / 0.1f );
+					//float value = Mathf.Exp( -5*d );
 
-				unitField[dx, dz] += factor * value;
-				//this.UpdateDebugCylinder(dx, dz);
+					unitField[dx, dz] += factor * value;
+				//}
 			}
 		}
 	}
@@ -207,20 +197,4 @@ public class FlowField {
     {
         FlowField.AddUnit(pos, radius, -factor);
     }
-
-        private void UpdateDebugCylinder( int x, int z ) {
-		if (DEBUG) {
-			GameObject obj = debugCylinders[x, z];
-			float px = x + 0.5f * (1 / valuesPerCell);
-			float pz = z + 0.5f * (1 / valuesPerCell);
-			float cost =  GetCost( px, pz );
-			//float cost = 1 + GetCost( px, pz ) - GetCost( px, pz, false );
-
-			if (cost < float.MaxValue) {
-                obj.transform.localScale = new Vector3( 0.5f / valuesPerCell, cost/50.0f, 0.5f / valuesPerCell );
-				float v = IsAccessible( (int)px, (int)pz ) ? 1.0f : 0.3f;
-				obj.GetComponent<Renderer>().material.color = Color.HSVToRGB( (cost/50.0f)%1, 1, v );
-			}
-		}
-	}
 }

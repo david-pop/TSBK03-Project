@@ -19,7 +19,6 @@ public class FlowField {
 	public const float SQRT_2 = 1.41421356f;
 
 	public static int  width, height;
-	private int[,] obstacleField;
 	private float[,] integratorField;
 	public static float[,] unitField;
 	private bool[,] visitedField;
@@ -29,22 +28,21 @@ public class FlowField {
 	private static int valuesPerCell = 3;
 
 
-	public FlowField(int[,] obstacleField, int cellSize, float goalX, float goalZ):
-	this(obstacleField, cellSize,
-		 Mathf.FloorToInt(goalX / cellSize * valuesPerCell),
-		 Mathf.FloorToInt(goalZ / cellSize * valuesPerCell)){
-	}
+	public FlowField(float goalX, float goalZ):
+		this(
+			Mathf.FloorToInt(goalX / WorldManager.Instance.CellSize * valuesPerCell),
+			Mathf.FloorToInt(goalZ / WorldManager.Instance.CellSize * valuesPerCell)
+		){}
 
-	private FlowField(int[,] obstacleField, int cellSize, int goalX, int goalZ) {
-		width = obstacleField.GetLength(0) * valuesPerCell;
-		height = obstacleField.GetLength(1) * valuesPerCell;
+	private FlowField(int goalX, int goalZ) {
+		width = WorldManager.Instance.GridSize * valuesPerCell;
+		height = WorldManager.Instance.GridSize * valuesPerCell;
 
 		if (unitField == null)
 		{
 			unitField = new float[width, height];
 		}
 
-		this.obstacleField = obstacleField;
 		this.integratorField = new float[width, height];
 		this.visitedField = new bool[width, height];
 
@@ -56,8 +54,8 @@ public class FlowField {
 		}
 
 		Generate(
-			(int)(goalX * valuesPerCell),
-			(int)(goalZ * valuesPerCell)
+			goalX,
+			goalZ
 		);
 
 		//integratorField[goalX, goalZ] = -5.0f;
@@ -89,13 +87,13 @@ public class FlowField {
 		if (!IsInside(x, z))
 			return;
 
-		if (visitedField[x, z])
+		if (visitedField[x,z])
 			return;
 
-		if (obstacleField[(int)(x / valuesPerCell), (int)(z / valuesPerCell)] != 0)
+		if (WorldManager.Instance.worldGrid[(int)(x / valuesPerCell), (int)(z / valuesPerCell)] != 0)
 			return;
 
-		visitedField[x, z] = true;
+		visitedField[x,z] = true;
 		integratorField[x,z] = cost;
 
 		searchQueue.Enqueue( new Node(x + 1, z, cost + 1) );

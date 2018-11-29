@@ -50,14 +50,13 @@ public class UnitManager : MonoBehaviour {
 		if(Input.GetMouseButtonDown(1)){
 			Vector3 pos = Utils.GetMousePlanePosition();
 
-			FlowField ff = new FlowField(
-				WorldManager.Instance.worldGrid,
-				WorldManager.Instance.CellSize,
-				pos.x, pos.z);
+			if (selectedUnits.Count > 0) {
+				FlowField ff = new FlowField(pos.x, pos.z);
 
-            foreach (GameObject unit in selectedUnits){
-				Unit obj = unit.GetComponent<Unit>();
-				obj.setFlowField(ff);
+	            foreach (GameObject unit in selectedUnits){
+					Unit obj = unit.GetComponent<Unit>();
+					obj.setFlowField(ff);
+				}
 			}
 		}
     }

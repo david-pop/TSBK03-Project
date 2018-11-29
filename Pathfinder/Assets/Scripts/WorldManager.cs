@@ -48,6 +48,8 @@ public class WorldManager : MonoBehaviour {
 			}
 		}
 
+        FlowField.InitUnitField();
+
 		//Vector3 goal = GetRandomAccessible();
 		//FlowField ff = new FlowField( this.worldGrid, 1, goal.x, goal.z );
 		//DebugFlowfield(ff);

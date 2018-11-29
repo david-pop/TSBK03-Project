@@ -19,7 +19,7 @@ public class FlowField {
     public const bool DEBUG = false;
 	public const float SQRT_2 = 1.41421356f;
 
-	private int width, height;
+	public static int  width, height;
 	private int[,] obstacleField;
 	private float[,] integratorField;
 	public static float[,] unitField;
@@ -81,7 +81,13 @@ public class FlowField {
 		}
 	}
 
-	private void Generate(int goalX, int goalZ) {
+    public static void InitUnitField(){
+        int width = WorldManager.Instance.GridSize * valuesPerCell;
+        int height = WorldManager.Instance.GridSize * valuesPerCell;
+        unitField = new float[width, height];
+    }
+
+    private void Generate(int goalX, int goalZ) {
 		searchQueue = new Queue<Node>();
 		searchQueue.Enqueue( new Node(goalX, goalZ, 0.0f) );
 
@@ -173,7 +179,7 @@ public class FlowField {
 		return GetDirection(pos.x, pos.z);
 	}
 
-	private bool IsInside(int x, int z) {
+	private static bool IsInside(int x, int z) {
 		return (x >= 0 && x < width && z >= 0 && z < height);
 	}
 
@@ -186,20 +192,22 @@ public class FlowField {
 		int iz = Mathf.RoundToInt( pos.z );
 
 		int iRad = Mathf.CeilToInt( radius );
-
+        
 		for (int dx = ix-iRad; dx <= ix+iRad; dx++) {
 			for (int dz = iz-iRad; dz <= iz+iRad; dz++) {
-				Vector3 p = new Vector3(dx, 0, dz);
-				float d = Vector3.Distance( pos, p ) / radius;
-				//Debug.Log(radius + " (" + dx + ", " + dz + ") " + d);
+                if(IsInside(dx, dz)){
+                    Vector3 p = new Vector3(dx, 0, dz);
+                    float d = Vector3.Distance(pos, p) / radius;
+                    //Debug.Log(radius + " (" + dx + ", " + dz + ") " + d);
 
-				//float value = Mathf.Sin(12.6f * d) / (12.6f * d);
-				float value = Mathf.Exp( -(d*d) / 0.1f );
-				//float value = Mathf.Exp( -5*d );
+                    //float value = Mathf.Sin(12.6f * d) / (12.6f * d);
+                    float value = Mathf.Exp(-(d * d) / 0.1f);
+                    //float value = Mathf.Exp( -5*d );
 
-				unitField[dx, dz] += factor * value;
-				//this.UpdateDebugCylinder(dx, dz);
-			}
+                    unitField[dx, dz] += factor * value;
+                    //this.UpdateDebugCylinder(dx, dz);
+                }
+            }
 		}
 	}
 

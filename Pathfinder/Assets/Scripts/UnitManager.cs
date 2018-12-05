@@ -25,12 +25,22 @@ public class UnitManager : MonoBehaviour {
 
 		int unitCount = 100;
 
+		bool[,] placedUnits = new bool[WorldManager.Instance.GridSize, WorldManager.Instance.GridSize];
+		int failCount = 0;
+
 		while (unitCount > 0) {
 			int x = Random.Range(0, WorldManager.Instance.GridSize);
 			int z = Random.Range(0, WorldManager.Instance.GridSize);
-			if ( WorldManager.Instance.IsAccessible(x, z) ) {
+			if ( WorldManager.Instance.IsAccessible(x, z) && !placedUnits[x,z] ) {
 				createUnitAtPosition( new Vector3(x+0.5f, 0, z+0.5f) );
+				placedUnits[x,z] = true;
 				unitCount -= 1;
+				failCount = 0;
+			} else {
+				failCount += 1;
+				if (failCount > 1000) {
+					break;
+				}
 			}
 		}
 	}

@@ -297,7 +297,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   selectedUnitMaterial: {fileID: 2100000, guid: 3fb2d974597974778ba46da66c3ef281,
     type: 2}
-  defaultUnitMaterial: {fileID: 10302, guid: 0000000000000000f000000000000000, type: 3}
+  defaultUnitMaterial: {fileID: 2100000, guid: f7c6e376029d5487fa6b096f514599d8, type: 3}
   unitPrefab: {fileID: 1433447234506120, guid: 71ef3da247845491f8e74fe5a9786f6f, type: 2}
 --- !u!4 &1458176833
 Transform:
@@ -430,7 +430,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ecad3cc083ef1477ab0347a219555283, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GridSize: 50
   GridColor: {r: 0, g: 0, b: 0, a: 0.3764706}
 --- !u!4 &2131969604
 Transform:

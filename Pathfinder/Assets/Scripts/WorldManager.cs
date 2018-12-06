@@ -73,6 +73,7 @@ public class WorldManager : MonoBehaviour {
 		}
 
         FlowField.InitUnitField();
+        FlowField.initWallCostField();
 	}
 
 	private Matrix4x4 CreateWallTransform(int x, int z, float height){

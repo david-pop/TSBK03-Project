@@ -20,7 +20,8 @@ public class FlowField {
 
 	public static int  width, height;
 	private float[,] integratorField;
-	public static float[,] unitField;
+    public static float[,] unitField;
+    public static float[,] wallCostField;
 	private bool[,] visitedField;
 
 	private Queue<Node> searchQueue;
@@ -96,15 +97,27 @@ public class FlowField {
 		visitedField[x,z] = true;
 		integratorField[x,z] = cost;
 
-		searchQueue.Enqueue( new Node(x + 1, z, cost + 1) );
-		searchQueue.Enqueue( new Node(x - 1, z, cost + 1) );
-		searchQueue.Enqueue( new Node(x, z + 1, cost + 1) );
-		searchQueue.Enqueue( new Node(x, z - 1, cost + 1) );
-		searchQueue.Enqueue( new Node(x + 1, z + 1, cost + SQRT_2) );
-		searchQueue.Enqueue( new Node(x - 1, z + 1, cost + SQRT_2) );
-		searchQueue.Enqueue( new Node(x - 1, z - 1, cost + SQRT_2) );
-		searchQueue.Enqueue( new Node(x + 1, z - 1, cost + SQRT_2) );
-	}
+
+
+  //      searchQueue.Enqueue( new Node(x + 1, z, cost + 1 + wallCostField[x+1, z]) );
+		//searchQueue.Enqueue( new Node(x - 1, z, cost + 1 + wallCostField[x-1, z]) );
+		//searchQueue.Enqueue( new Node(x, z + 1, cost + 1 + wallCostField[x, z+1]) );
+		//searchQueue.Enqueue( new Node(x, z - 1, cost + 1 + wallCostField[x, z-1]) );
+		//searchQueue.Enqueue( new Node(x + 1, z + 1, cost + SQRT_2 + wallCostField[x+1, z+1]) );
+		//searchQueue.Enqueue( new Node(x - 1, z + 1, cost + SQRT_2 + wallCostField[x-1, z+1]) );
+		//searchQueue.Enqueue( new Node(x - 1, z - 1, cost + SQRT_2 + wallCostField[x-1, z-1]) );
+		//searchQueue.Enqueue( new Node(x + 1, z - 1, cost + SQRT_2 + wallCostField[x+1, z-1]) );
+
+
+        searchQueue.Enqueue(new Node(x + 1, z, cost + 1));
+        searchQueue.Enqueue(new Node(x - 1, z, cost + 1));
+        searchQueue.Enqueue(new Node(x, z + 1, cost + 1));
+        searchQueue.Enqueue(new Node(x, z - 1, cost + 1));
+        searchQueue.Enqueue(new Node(x + 1, z + 1, cost + SQRT_2));
+        searchQueue.Enqueue(new Node(x - 1, z + 1, cost + SQRT_2));
+        searchQueue.Enqueue(new Node(x - 1, z - 1, cost + SQRT_2));
+        searchQueue.Enqueue(new Node(x + 1, z - 1, cost + SQRT_2));
+    }
 
 	public bool IsAccessible(int x, int z) {
 		return IsInside(x, z) && this.visitedField[x, z];
@@ -116,7 +129,7 @@ public class FlowField {
 
 	private float Get(int x, int z, bool withUnits=true) {
 		if (withUnits)
-			return this.integratorField[x, z] + unitField[x, z];
+            return this.integratorField[x, z] + unitField[x, z] + wallCostField[x,z];
 		else
 			return this.integratorField[x, z];
 	}
@@ -144,7 +157,8 @@ public class FlowField {
 		float C = IsAccessible(ix+1, iz+1) ? Get(ix+1, iz+1, withUnits) : obstacleCost;
 		float D = IsAccessible(ix+0, iz+1) ? Get(ix+0, iz+1, withUnits) : obstacleCost;
 
-		float value = Utils.QuadLerp( A, B, C, D, fx - ix, fz - iz );
+        float value = Utils.QuadLerp(A, B, C, D, fx - ix, fz - iz);
+
 		return Mathf.Max( value, 0 );
 	}
 
@@ -208,4 +222,42 @@ public class FlowField {
 	{
 		FlowField.AddUnit(pos, radius, -factor);
 	}
+
+    public static void initWallCostField(){
+        int wallCostFieldWidth = WorldManager.Instance.GridSize * valuesPerCell;
+        int wallCostFieldHeight = WorldManager.Instance.GridSize * valuesPerCell;
+        int wallCostRadius = 16;
+        int wallCostFactor = 5;
+
+        wallCostField = new float[wallCostFieldWidth, wallCostFieldHeight];
+
+        for (int x = 0; x < WorldManager.Instance.GridSize; x++){
+            for (int z = 0; z < WorldManager.Instance.GridSize; z++){
+                if(WorldManager.Instance.worldGrid[x, z] == 1){
+                    float centerx = x * valuesPerCell + 1;
+                    float centerz = z * valuesPerCell + 1;
+
+                    int ix = Mathf.RoundToInt(centerx);
+                    int iz = Mathf.RoundToInt(centerz);
+
+                    int iRad = Mathf.CeilToInt(wallCostRadius);
+
+                    for (int dx = ix - iRad; dx <= ix + iRad; dx++)
+                    {
+                        for (int dz = iz - iRad; dz <= iz + iRad; dz++)
+                        {
+                            if (dx >= 0 && dx < wallCostFieldWidth && dz >= 0 && dz < wallCostFieldHeight)
+                            {
+                                Vector3 p = new Vector3(dx, 0, dz);
+                                Vector3 pos = new Vector3(ix, 0, iz);
+                                float d = Vector3.Distance(pos, p);
+                                float value = Mathf.Exp(-(d * d) / 32);
+                                wallCostField[dx, dz] = Mathf.Max(wallCostField[dx, dz], wallCostFactor * value);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

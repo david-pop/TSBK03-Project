@@ -49,6 +49,7 @@ public class Node : IComparable {
 
 public class FlowField {
 	public const float SQRT_2 = 1.41421356f;
+    public static FlowField activeFlowField;
 
 	public static int  width, height;
 	private float[,] integratorField;
@@ -95,11 +96,13 @@ public class FlowField {
 		//integratorField[this.goalX, this.goalZ] = -5.0f;
 
 		//for (int x = 0; x < width; x++) {
-		//	for (int z = 0; z < height; z++) {	
+		//	for (int z = 0; z < height; z++) {
 		//		WorldManager.Instance.UpdateDebugShape(x, z, this);
 		//	}
 		//}
-	}
+
+        activeFlowField = this;
+    }
 
 	public static void InitUnitField(){
 		int width = WorldManager.Instance.GridSize * WorldManager.Instance.CellDensity;

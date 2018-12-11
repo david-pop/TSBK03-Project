@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class WorldManager : MonoBehaviour {
 	public static WorldManager Instance = null;
-	public const bool DEBUG = false;
+	public const bool DEBUG = true;
 
 	public Material obstacleMaterial;
 
@@ -15,16 +15,24 @@ public class WorldManager : MonoBehaviour {
 	private int ChunkSize = 8;
 	private Dictionary<Vector3, List<Matrix4x4>> terrainChunks;
 	public int[,] worldGrid;
+
 	public Mesh wallMesh;
 	public Material wallMaterial;
 
-	public GameObject debugShape;
+    private int DebugChunkSize = 24;
+    public GameObject debugShape;
 	public Mesh debugMesh;
-	public Material debugMaterial;
+    public Material debugMaterial;
 	private GameObject[,] debugShapes;
+    private Dictionary<Vector3, List<Matrix4x4>> debugChunks;
+    private Vector4[] debugColors;
 
-	// Use this for initialization
-	void Start () {
+    private MaterialPropertyBlock debugPropertyBlock;
+
+
+
+    // Use this for initialization
+    void Start () {
 		if (Instance == null) {
 			Instance = this;
 		} else if (Instance != this) {
@@ -119,7 +127,53 @@ public class WorldManager : MonoBehaviour {
 				Graphics.DrawMeshInstanced(wallMesh, 0, wallMaterial, chunkPair.Value);
 			}
 		}
-	}
+
+        if(DEBUG){
+            foreach (KeyValuePair<Vector3, List<Matrix4x4>> chunkPair in debugChunks)
+            {
+                Vector3 chunkPos = chunkPair.Key;
+
+                if (chunkPos.x < camPos.x + 30 &&
+                    chunkPos.x + DebugChunkSize > camPos.x - 30 &&
+                    chunkPos.z < camPos.z + 55 - 15 &&
+                    chunkPos.z + DebugChunkSize > camPos.z - 15 + 10)
+                {
+                    if (FlowField.activeFlowField != null)
+                    {
+                        Vector4[] colors = new Vector4[chunkPair.Value.Count];
+
+                        for (int i = 0; i < chunkPair.Value.Count; i++)
+                        {
+                            Matrix4x4 m = chunkPair.Value[i];
+                            Vector3 pos = m.GetColumn(3);
+                            float px = pos.x * CellDensity;
+                            float pz = pos.z * CellDensity;
+                            float cost = 1 + FlowField.activeFlowField.GetCost(px, pz);
+                            if (cost < float.MaxValue)
+                            {
+                                m.SetTRS(
+                                    pos,
+                                    Quaternion.Euler(Vector3.zero),
+                                    new Vector3(0.5f / CellDensity, cost / 5.0f, 0.5f / CellDensity)
+                                );
+                                chunkPair.Value[i] = m;
+                                colors[i] = Color.HSVToRGB((cost / 50.0f) % 1, 1, 1);
+                            }
+
+                        }
+                        debugPropertyBlock.SetVectorArray("_Color", colors);
+                    }
+
+                    Graphics.DrawMeshInstanced(mesh: debugMesh, submeshIndex: 0,
+                                               material: debugMaterial, matrices: chunkPair.Value,
+                                               properties: debugPropertyBlock,
+                                               castShadows: UnityEngine.Rendering.ShadowCastingMode.Off,
+                                               receiveShadows: false);
+                }
+            }
+        }
+
+    }
 
 	public bool IsAccessible(int x, int z) {
 		return (this.worldGrid[x, z] == 0);
@@ -179,29 +233,45 @@ public class WorldManager : MonoBehaviour {
 		}
 	}
 
-	private void CreateDebugShapes() {
+    private void CreateDebugShapes() {
 		if (!DEBUG) return;
 
-		this.debugShapes = new GameObject[GridSize * CellDensity, GridSize * CellDensity];
+        debugChunks = new Dictionary<Vector3, List<Matrix4x4>>();
+        debugPropertyBlock = new MaterialPropertyBlock();
+        debugColors = new Vector4[DebugChunkSize * DebugChunkSize];
 
-		for (int x = 0; x < GridSize * CellDensity; x++) {
-			for (int z = 0; z < GridSize * CellDensity; z++) {
-				float px = x + 0.5f;
-				float pz = z + 0.5f;
-				GameObject obj = Instantiate( debugShape );
-				//GameObject obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
-				debugShapes[x, z] = obj;
-				obj.transform.position = new Vector3( px / CellDensity, 0, pz / CellDensity );
+        for (int chunkX = 0; chunkX <= GridSize * CellDensity; chunkX += DebugChunkSize)
+        {
+            for (int chunkZ = 0; chunkZ <= GridSize * CellDensity; chunkZ += DebugChunkSize)
+            {
+                Vector3 chunkPos = new Vector3((float)chunkX / CellDensity , 0, (float)chunkZ / CellDensity);
+                debugChunks[chunkPos] = new List<Matrix4x4>();
 
-				obj.transform.localScale = new Vector3( 0.5f / CellDensity, 0.1f, 0.5f / CellDensity);
-				obj.GetComponent<Renderer>().material.color = Color.black;
-			}
-		}
+                for (int x = chunkX; x < chunkX + DebugChunkSize; x++){
+                    for (int z = chunkZ; z < chunkZ + DebugChunkSize; z++){
+                        float px = (x + 0.5f) / CellDensity;
+                        float pz = (z + 0.5f) / CellDensity;
+                        Matrix4x4 shape = new Matrix4x4();
+                        shape.SetTRS(
+                            new Vector3(px, 0, pz),
+                            Quaternion.Euler(Vector3.zero),
+                            new Vector3(0.5f / CellDensity, 0.1f, 0.5f / CellDensity)
+                        );
+
+
+                        debugChunks[chunkPos].Add(shape);
+                    }
+                }
+            }
+
+        }
 	}
 
 
 	public void UpdateDebugShape( int x, int z, FlowField ff ) {
 		if (!DEBUG) return;
+
+
 
 		GameObject obj = this.debugShapes[x, z];
 		float px = x + 0.5f;

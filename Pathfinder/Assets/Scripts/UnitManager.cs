@@ -69,6 +69,11 @@ public class UnitManager : MonoBehaviour {
 				}
 			}
 		}
+
+		if (Input.GetKeyDown("space")) {
+			Debug.Log("Selected all");
+            selectUnits(this.units);
+		}
     }
 
 	void OnGUI() {

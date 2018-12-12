@@ -69,6 +69,14 @@ public class Unit : MonoBehaviour {
                 newUnitZ = Mathf.Max((int)testUnitZ, (int)unitZ) - radVec.z;
             }
 
+            if(WorldManager.Instance.worldGrid[(int)unitX, (int)testUnitZ] == 0 &&
+                WorldManager.Instance.worldGrid[(int)testUnitX, (int)unitZ] == 0 &&
+                WorldManager.Instance.worldGrid[(int)testUnitX, (int)testUnitZ] != 0
+              ){
+                newUnitX = Mathf.Max((int)testUnitX, (int)unitX) - radVec.x;
+                newUnitZ = Mathf.Max((int)testUnitZ, (int)unitZ) - radVec.z;
+            }
+
             //else if (WorldManager.Instance.worldGrid[(int)testUnitX, (int)testUnitZ] != 0)
             //{
             //    newUnitX = Mathf.Max((int)testUnitX, (int)unitX) - radVec.x;

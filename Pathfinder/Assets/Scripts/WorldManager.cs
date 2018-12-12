@@ -257,7 +257,7 @@ public class WorldManager : MonoBehaviour {
 	}
 
 	public bool IsAccessible(int x, int z) {
-		return (this.worldGrid[x, z] == 0);
+		return (x >= 0 && x < GridSize && z >= 0 && z < GridSize) && (this.worldGrid[x, z] == 0);
 	}
 
 	public Vector3 GetRandomAccessible() {

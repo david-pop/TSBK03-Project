@@ -340,7 +340,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   obstacleMaterial: {fileID: 2100000, guid: cc3831aabec484c00816f98ab2ad3e24, type: 2}
-  GridSize: 50
+  GridSize: 100
   CellSize: 1
   CellDensity: 3
   wallMesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}

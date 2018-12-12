@@ -63,7 +63,17 @@ public class UnitManager : MonoBehaviour {
 			if (selectedUnits.Count > 0) {
 				FlowField ff = new FlowField(pos.x, pos.z);
 
-	            foreach (GameObject unit in selectedUnits){
+				selectedUnits.Sort(delegate(GameObject a, GameObject b) {
+					return Vector3.Distance(pos, a.transform.position).CompareTo(
+						Vector3.Distance(pos, b.transform.position)
+					);
+				});
+				selectedUnits.Reverse();
+
+				foreach (GameObject unit in selectedUnits) {
+					Vector3 p = unit.transform.position;
+					ff.Generate((int)p.x, (int)p.z);
+
 					Unit obj = unit.GetComponent<Unit>();
 					obj.setFlowField(ff);
 				}

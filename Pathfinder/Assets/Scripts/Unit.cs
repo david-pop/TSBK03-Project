@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Unit : MonoBehaviour {
 	private float speed = 4.0f;
-	private float separationRadius = 2.0f;
+	private float separationRadius = 1.5f;
 	private float separationFactor = 4.0f;
 	//private float cohesionRadius = 10.0f;
 	//private float cohesionFactor = -0.1f;

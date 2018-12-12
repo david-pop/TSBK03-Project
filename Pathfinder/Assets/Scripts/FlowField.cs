@@ -32,7 +32,7 @@ public class Node : IComparable {
 			return _min;
 		}
 	}
-	
+
 	public static Node MaxValue
 	{
 		get
@@ -72,7 +72,7 @@ public class FlowField {
 		){}
 
 	private FlowField(int goalX, int goalZ) {
-		Debug.Log("New FlowField (" + goalX + ", " + goalZ + ")");
+		Debug.Log("---New FlowField---");
 
 		this.goalX = goalX;
 		this.goalZ = goalZ;
@@ -169,48 +169,82 @@ public class FlowField {
 		this.searchCount = 0;
 	}
 
+	private void UpdateQueue(int targetX, int targetZ) {
+		PriorityQueue<Node> newQueue = new PriorityQueue<Node>(PriorityOrder.Min);
+
+		foreach (Node node in this.searchQueue) {
+			float heuristic = Vector2.Distance( new Vector2(node.x, node.z), new Vector2(targetX, targetZ) );
+
+			newQueue.Enqueue(
+				new Node {
+					x = node.x,
+					z = node.z,
+					cost = node.cost,
+					priority = node.cost + heuristic
+				},
+				Node.MinValue,
+				Node.MaxValue
+			);
+		}
+
+		this.searchQueue = newQueue;
+	}
+
+	public void Generate(float targetX, float targetZ) {
+		this.Generate(
+			Mathf.FloorToInt( targetX * WorldManager.Instance.CellDensity ),
+			Mathf.FloorToInt( targetZ * WorldManager.Instance.CellDensity )
+		);
+	}
+
 	private void Generate(int targetX, int targetZ) {
-		if ( !this.accessibleField[targetX, targetZ] ) {
+		if ( !this.accessibleField[targetX, targetZ] || this.visitedField[targetX, targetZ] ) {
 			return;
 		}
+
+		this.UpdateQueue(targetX, targetZ);
 
 		int count = this.searchCount;
 		while (searchQueue.Count > 0 && !this.visitedField[targetX, targetZ]) {
 			Node node = searchQueue.Dequeue();
 			searchQueue.TrimExcess();
-			Integrate(node.x, node.z, node.cost);
+			Integrate(node, targetX, targetZ);
 
 			this.searchCount++;
 		}
 
-		if (count != this.searchCount) {
-			Debug.Log("Search: " + this.searchCount + " iterations");
-			Debug.Log("Queue size: " + searchQueue.Count);
-		}
+		//if (count != this.searchCount) {
+		//	Debug.Log("Search: " + this.searchCount + " iterations (" + searchQueue.Count + ")");
+		//}
 	}
 
-	private void Integrate(int x, int z, float cost) {
+	private void Integrate(Node node, int targetX, int targetZ) {
+		int x = node.x;
+		int z = node.z;
+
 		if (!IsInside(x, z))
 			return;
 
-		if (visitedField[x,z])
+		if (visitedField[x, z])
 			return;
 
 		if (IsWall(x, z))
 			return;
 
 		visitedField[x,z] = true;
-		integratorField[x,z] = cost;
+		integratorField[x,z] = node.cost;
 
 		for (int dx = x-1; dx <= x+1; dx++) {
 			for (int dz = z-1; dz <= z+1; dz++) {
-				if ( !visitedField[dx,dz] && IsAccessible(x, z) ) {
+				if ( !visitedField[dx, dz] && IsAccessible(x, z) ) {
 					float d = (dx == x || dz == z) ? 1 : SQRT_2;
+					float heuristic = Vector2.Distance( new Vector2(dx, dz), new Vector2(targetX, targetZ) );
+
 					searchQueue.Enqueue( new Node {
 							x = dx,
 							z = dz,
-							cost = cost + d + wallCostField[dx, dz],
-							priority = cost + d + wallCostField[dx, dz]
+							cost = node.cost + d + wallCostField[dx, dz],
+							priority = node.cost + d + wallCostField[dx, dz] + heuristic
 						}, Node.MinValue, Node.MaxValue
 					);
 				}
@@ -227,8 +261,12 @@ public class FlowField {
 		return IsAccessible((int)x, (int)z);
 	}
 
-	private float Get(int x, int z, bool withUnits=true) {
-		if ( !this.visitedField[x, z] ) {
+	public bool IsExplored(float x, float z) {
+		return IsAccessible(x, z) && this.visitedField[(int)x, (int)z];
+	}
+
+	private float Get(int x, int z, bool withUnits=true, bool explore=true) {
+		if ( explore && !this.visitedField[x, z] ) {
 			this.Generate(x, z);
 		}
 
@@ -238,7 +276,7 @@ public class FlowField {
 			return this.integratorField[x, z];
 	}
 
-	public float GetCost(float fx, float fz, bool withUnits=true) {
+	public float GetCost(float fx, float fz, bool withUnits=true, bool explore=true) {
 		fx -= 0.5f;
 		fz -= 0.5f;
 		int ix = Mathf.FloorToInt(fx);
@@ -250,17 +288,17 @@ public class FlowField {
 		for (int dx = ix; dx <= ix+1; dx++)
 			for (int dz = iz; dz <= iz+1; dz++)
 				if (IsAccessible(dx, dz)) {
-					float cost = Get(dx, dz, withUnits);
+					float cost = Get(dx, dz, withUnits, explore);
 					lowestCost = Mathf.Min(lowestCost, cost);
 					maxCost = Mathf.Max(maxCost, cost);
 				}
 
 
 		float obstacleCost = maxCost + 0.0f;
-		float A = IsAccessible(ix+0, iz+0) ? Get(ix+0, iz+0, withUnits) : obstacleCost;
-		float B = IsAccessible(ix+1, iz+0) ? Get(ix+1, iz+0, withUnits) : obstacleCost;
-		float C = IsAccessible(ix+1, iz+1) ? Get(ix+1, iz+1, withUnits) : obstacleCost;
-		float D = IsAccessible(ix+0, iz+1) ? Get(ix+0, iz+1, withUnits) : obstacleCost;
+		float A = IsAccessible(ix+0, iz+0) ? Get(ix+0, iz+0, withUnits, explore) : obstacleCost;
+		float B = IsAccessible(ix+1, iz+0) ? Get(ix+1, iz+0, withUnits, explore) : obstacleCost;
+		float C = IsAccessible(ix+1, iz+1) ? Get(ix+1, iz+1, withUnits, explore) : obstacleCost;
+		float D = IsAccessible(ix+0, iz+1) ? Get(ix+0, iz+1, withUnits, explore) : obstacleCost;
 
 		float value = Utils.QuadLerp(A, B, C, D, fx - ix, fz - iz);
 
@@ -323,7 +361,6 @@ public class FlowField {
 				if(IsInside(dx, dz)){
 					Vector3 p = new Vector3(dx, 0, dz);
 					float d = Vector3.Distance(pos, p) / radius;
-					//Debug.Log(radius + " (" + dx + ", " + dz + ") " + d);
 
 					//float value = Mathf.Sin(12.6f * d) / (12.6f * d);
 					float value = Mathf.Exp(-(d * d) / 0.1f);

@@ -210,7 +210,21 @@ public class FlowField {
 		return Mathf.Max( value, 0 );
 	}
 
-	public Vector3 GetDirection(float x, float z) {
+    public float GetWallCost(float fx, float fz){
+        fx -= 0.5f;
+        fz -= 0.5f;
+        int ix = Mathf.FloorToInt(fx);
+        int iz = Mathf.FloorToInt(fz);
+
+        float A = IsInside(ix, iz) ? wallCostField[ix, iz] : 1.0f;
+        float B = IsInside(ix+1, iz) ? wallCostField[ix+1, iz] : 1.0f;
+        float C = IsInside(ix+1, iz+1) ? wallCostField[ix+1, iz+1] : 1.0f;
+        float D = IsInside(ix, iz+1) ? wallCostField[ix, iz+1] : 1.0f;
+        float value = Utils.QuadLerp(A, B, C, D, fx - ix, fz - iz);
+        return Mathf.Max(value, 0);
+    }
+
+    public Vector3 GetDirection(float x, float z) {
 		x *= WorldManager.Instance.CellDensity;
 		z *= WorldManager.Instance.CellDensity;
 

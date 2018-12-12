@@ -19,13 +19,15 @@ public class WorldManager : MonoBehaviour {
 	public Mesh wallMesh;
 	public Material wallMaterial;
 
-    private int DebugChunkSize = 24;
+    private int DebugChunkSize = 8;
     public GameObject debugShape;
 	public Mesh debugMesh;
     public Material debugMaterial;
 	private GameObject[,] debugShapes;
     private Dictionary<Vector3, List<Matrix4x4>> debugChunks;
     private Vector4[] debugColors;
+    private int debugMode;
+
 
     private MaterialPropertyBlock debugPropertyBlock;
 
@@ -44,6 +46,8 @@ public class WorldManager : MonoBehaviour {
 		CreateTerrain();
 		Debug.Log("Done!");
 		CreateDebugShapes();
+
+        debugMode = 0;
 	}
 
 	private void CreateTerrain() {
@@ -128,7 +132,7 @@ public class WorldManager : MonoBehaviour {
 			}
 		}
 
-        if(DEBUG){
+        if(debugMode != 0){
             foreach (KeyValuePair<Vector3, List<Matrix4x4>> chunkPair in debugChunks)
             {
                 Vector3 chunkPos = chunkPair.Key;
@@ -140,15 +144,22 @@ public class WorldManager : MonoBehaviour {
                 {
                     if (FlowField.activeFlowField != null)
                     {
-                        Vector4[] colors = new Vector4[chunkPair.Value.Count];
-
                         for (int i = 0; i < chunkPair.Value.Count; i++)
                         {
                             Matrix4x4 m = chunkPair.Value[i];
                             Vector3 pos = m.GetColumn(3);
                             float px = pos.x * CellDensity;
                             float pz = pos.z * CellDensity;
-                            float cost = 1 + FlowField.activeFlowField.GetCost(px, pz);
+                            float cost = 1.0f;
+
+                            if(debugMode == 1){
+                                cost = 1 + FlowField.activeFlowField.GetCost(px, pz);
+                            }else if(debugMode == 2){
+                                cost = 1 + FlowField.activeFlowField.GetCost(px, pz) - FlowField.activeFlowField.GetCost(px, pz, false);
+                            }else if(debugMode == 3){
+                                cost = FlowField.activeFlowField.GetWallCost(px, pz) * 5 + 0.1f;
+                            }
+
                             if (cost < float.MaxValue)
                             {
                                 m.SetTRS(
@@ -157,11 +168,11 @@ public class WorldManager : MonoBehaviour {
                                     new Vector3(0.5f / CellDensity, cost / 5.0f, 0.5f / CellDensity)
                                 );
                                 chunkPair.Value[i] = m;
-                                colors[i] = Color.HSVToRGB((cost / 50.0f) % 1, 1, 1);
+                                debugColors[i] = Color.HSVToRGB((cost / 50.0f) % 1, 1, 1);
                             }
 
                         }
-                        debugPropertyBlock.SetVectorArray("_Color", colors);
+                        debugPropertyBlock.SetVectorArray("_Color", debugColors);
                     }
 
                     Graphics.DrawMeshInstanced(mesh: debugMesh, submeshIndex: 0,
@@ -171,6 +182,25 @@ public class WorldManager : MonoBehaviour {
                                                receiveShadows: false);
                 }
             }
+        }
+
+        if(Input.GetKeyDown("z")){
+            debugMode = 0;
+        }
+
+        if (Input.GetKeyDown("x"))
+        {
+            debugMode = 1;
+        }
+
+        if (Input.GetKeyDown("c"))
+        {
+            debugMode = 2;
+        }
+
+        if (Input.GetKeyDown("v"))
+        {
+            debugMode = 3;
         }
 
     }

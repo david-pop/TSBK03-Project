@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
@@ -56,8 +56,10 @@ public class FlowField {
 	public static float[,] unitField;
 	public static float[,] wallCostField;
 	private bool[,] visitedField;
+	private bool[,] accessibleField;
 
 	private PriorityQueue<Node> searchQueue;
+	private int searchCount;
 
 	private int goalX;
 	private int goalZ;
@@ -70,6 +72,8 @@ public class FlowField {
 		){}
 
 	private FlowField(int goalX, int goalZ) {
+		Debug.Log("New FlowField (" + goalX + ", " + goalZ + ")");
+
 		this.goalX = goalX;
 		this.goalZ = goalZ;
 
@@ -83,26 +87,26 @@ public class FlowField {
 
 		this.integratorField = new float[width, height];
 		this.visitedField = new bool[width, height];
+		this.accessibleField = new bool[width, height];
 
 		for (int x = 0; x < width; x++) {
 			for (int z = 0; z < height; z++) {
 				this.integratorField[x, z] = float.MaxValue;
 				this.visitedField[x, z] = false;
+				this.accessibleField[x, z] = WorldManager.Instance.AreConnected(
+					(int)(this.goalX / WorldManager.Instance.CellDensity),
+					(int)(this.goalZ / WorldManager.Instance.CellDensity),
+					(int)(x / WorldManager.Instance.CellDensity),
+					(int)(z / WorldManager.Instance.CellDensity)
+				);
 			}
 		}
 
-		Generate();
-
-		//integratorField[this.goalX, this.goalZ] = -5.0f;
-
-		//for (int x = 0; x < width; x++) {
-		//	for (int z = 0; z < height; z++) {
-		//		WorldManager.Instance.UpdateDebugShape(x, z, this);
-		//	}
-		//}
+		InitQueue();
 
         activeFlowField = this;
     }
+
 
 	public static void InitUnitField(){
 		int width = WorldManager.Instance.GridSize * WorldManager.Instance.CellDensity;
@@ -110,30 +114,79 @@ public class FlowField {
 		unitField = new float[width, height];
 	}
 
-	private void Generate() {
+	public static void InitWallCostField(){
+		int wallCostFieldWidth = WorldManager.Instance.GridSize * WorldManager.Instance.CellDensity;
+		int wallCostFieldHeight = WorldManager.Instance.GridSize * WorldManager.Instance.CellDensity;
+		int wallCostRadius = 32;
+		int wallCostFactor = 5;
+
+		wallCostField = new float[wallCostFieldWidth, wallCostFieldHeight];
+
+		for (int x = 0; x < WorldManager.Instance.GridSize; x++){
+			for (int z = 0; z < WorldManager.Instance.GridSize; z++){
+				if(WorldManager.Instance.worldGrid[x, z] == 1){
+					float centerx = x * WorldManager.Instance.CellDensity + 1;
+					float centerz = z * WorldManager.Instance.CellDensity + 1;
+
+					int ix = Mathf.RoundToInt(centerx);
+					int iz = Mathf.RoundToInt(centerz);
+
+					int iRad = Mathf.CeilToInt(wallCostRadius);
+
+					for (int dx = ix - iRad; dx <= ix + iRad; dx++)
+					{
+						for (int dz = iz - iRad; dz <= iz + iRad; dz++)
+						{
+							if (dx >= 0 && dx < wallCostFieldWidth && dz >= 0 && dz < wallCostFieldHeight)
+							{
+								Vector3 p = new Vector3(dx, 0, dz);
+								Vector3 pos = new Vector3(ix, 0, iz);
+								float d = Vector3.Distance(pos, p);
+								float value = Mathf.Exp(-(d * d) / 4);
+								wallCostField[dx, dz] = Mathf.Max(wallCostField[dx, dz], wallCostFactor * value);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+
+	private void InitQueue() {
 		searchQueue = new PriorityQueue<Node>(PriorityOrder.Min);
 		searchQueue.Enqueue(
 			new Node {
 				x = this.goalX,
 				z = this.goalZ,
-				cost = 0.0f,
+				cost = 0.0f, // -5
 				priority = 0.0f
 			},
 			Node.MinValue,
 			Node.MaxValue
 		);
 
-		int i = 0;
-		while (searchQueue.Count > 0) {
-			i += 1;
-			if (i == 1000000)
-				break;
+		this.searchCount = 0;
+	}
 
+	private void Generate(int targetX, int targetZ) {
+		if ( !this.accessibleField[targetX, targetZ] ) {
+			return;
+		}
+
+		int count = this.searchCount;
+		while (searchQueue.Count > 0 && !this.visitedField[targetX, targetZ]) {
 			Node node = searchQueue.Dequeue();
 			searchQueue.TrimExcess();
 			Integrate(node.x, node.z, node.cost);
+
+			this.searchCount++;
 		}
-		Debug.Log(i);
+
+		if (count != this.searchCount) {
+			Debug.Log("Search: " + this.searchCount + " iterations");
+			Debug.Log("Queue size: " + searchQueue.Count);
+		}
 	}
 
 	private void Integrate(int x, int z, float cost) {
@@ -151,7 +204,7 @@ public class FlowField {
 
 		for (int dx = x-1; dx <= x+1; dx++) {
 			for (int dz = z-1; dz <= z+1; dz++) {
-				if ( !visitedField[dx,dz] && IsInside(x, z) && !IsWall(x, z) ) {
+				if ( !visitedField[dx,dz] && IsAccessible(x, z) ) {
 					float d = (dx == x || dz == z) ? 1 : SQRT_2;
 					searchQueue.Enqueue( new Node {
 							x = dx,
@@ -163,12 +216,11 @@ public class FlowField {
 				}
 			}
 		}
-
-		//searchQueue.Sort((a,b)=>b.priority.CompareTo(a.priority));
 	}
 
 	public bool IsAccessible(int x, int z) {
-		return IsInside(x, z) && this.visitedField[x, z];
+		//return IsInside(x, z) && this.visitedField[x, z];
+		return	IsInside(x, z) && this.accessibleField[x, z];
 	}
 
 	public bool IsAccessible(float x, float z) {
@@ -176,8 +228,12 @@ public class FlowField {
 	}
 
 	private float Get(int x, int z, bool withUnits=true) {
+		if ( !this.visitedField[x, z] ) {
+			this.Generate(x, z);
+		}
+
 		if (withUnits)
-			return this.integratorField[x, z] + unitField[x, z]/* + wallCostField[x,z]*/;
+			return this.integratorField[x, z] + unitField[x, z];
 		else
 			return this.integratorField[x, z];
 	}
@@ -193,9 +249,10 @@ public class FlowField {
 
 		for (int dx = ix; dx <= ix+1; dx++)
 			for (int dz = iz; dz <= iz+1; dz++)
-				if (IsAccessible(dx, dz)){
-					lowestCost = Mathf.Min(lowestCost, Get(dx, dz, withUnits));
-					maxCost = Mathf.Max(maxCost, Get(dx, dz, withUnits));
+				if (IsAccessible(dx, dz)) {
+					float cost = Get(dx, dz, withUnits);
+					lowestCost = Mathf.Min(lowestCost, cost);
+					maxCost = Mathf.Max(maxCost, cost);
 				}
 
 
@@ -282,43 +339,5 @@ public class FlowField {
 	public static void RemoveUnit(Vector3 pos, float radius, float factor)
 	{
 		FlowField.AddUnit(pos, radius, -factor);
-	}
-
-	public static void initWallCostField(){
-		int wallCostFieldWidth = WorldManager.Instance.GridSize * WorldManager.Instance.CellDensity;
-		int wallCostFieldHeight = WorldManager.Instance.GridSize * WorldManager.Instance.CellDensity;
-		int wallCostRadius = 32;
-		int wallCostFactor = 5;
-
-		wallCostField = new float[wallCostFieldWidth, wallCostFieldHeight];
-
-		for (int x = 0; x < WorldManager.Instance.GridSize; x++){
-			for (int z = 0; z < WorldManager.Instance.GridSize; z++){
-				if(WorldManager.Instance.worldGrid[x, z] == 1){
-					float centerx = x * WorldManager.Instance.CellDensity + 1;
-					float centerz = z * WorldManager.Instance.CellDensity + 1;
-
-					int ix = Mathf.RoundToInt(centerx);
-					int iz = Mathf.RoundToInt(centerz);
-
-					int iRad = Mathf.CeilToInt(wallCostRadius);
-
-					for (int dx = ix - iRad; dx <= ix + iRad; dx++)
-					{
-						for (int dz = iz - iRad; dz <= iz + iRad; dz++)
-						{
-							if (dx >= 0 && dx < wallCostFieldWidth && dz >= 0 && dz < wallCostFieldHeight)
-							{
-								Vector3 p = new Vector3(dx, 0, dz);
-								Vector3 pos = new Vector3(ix, 0, iz);
-								float d = Vector3.Distance(pos, p);
-								float value = Mathf.Exp(-(d * d) / 4);
-								wallCostField[dx, dz] = Mathf.Max(wallCostField[dx, dz], wallCostFactor * value);
-							}
-						}
-					}
-				}
-			}
-		}
 	}
 }

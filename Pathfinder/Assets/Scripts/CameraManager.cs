@@ -56,6 +56,7 @@ public class CameraManager : MonoBehaviour {
 		//if (Input.mousePosition.y >= Screen.height - this.panBorderThickness)
 		//	dy += 1;
 
+		/*
 		if (Input.GetMouseButtonDown(1)) {
 			this.dragOrigin = GetMousePlanePosition();
 			enableDrag = false;
@@ -70,6 +71,7 @@ public class CameraManager : MonoBehaviour {
 			}
 		}
 		else
+		*/
 		{
 			// Move the camera around the scene with WASD.
 			MoveCamera( dx, dy );

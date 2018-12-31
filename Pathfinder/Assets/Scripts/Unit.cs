@@ -25,9 +25,17 @@ public class Unit : MonoBehaviour {
 
 	// Update is called once per frame
 	void Update () {
-		//else if (Random.Range(0.0f, 1.0f) < 0.02) {
-		//	this.goalPosition += new Vector3(Random.Range(-1, 2), 0, Random.Range(-1, 2));
-		//}
+		/*if (Random.Range(0.0f, 1.0f) < 0.001) {
+			Vector3 goal = this.transform.position + new Vector3( Random.Range(-10, 11), 0, Random.Range(-10, 11) );
+
+			FlowField ff = new FlowField(goal.x, goal.z);
+
+			Vector3 p = this.transform.position;
+			ff.Generate((int)p.x, (int)p.z);
+
+			this.setFlowField(ff);
+		}*/
+
 
 		if (this.flowField != null) {
             FlowField.RemoveUnit(this.transform.position, this.separationRadius, this.separationFactor);
@@ -101,6 +109,8 @@ public class Unit : MonoBehaviour {
 				*/
 			}
 		}
+
+
 	}
 
 	public void setFlowField(FlowField flowField){

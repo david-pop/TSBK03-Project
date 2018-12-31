@@ -202,11 +202,15 @@ public class WorldManager : MonoBehaviour {
 							float px = pos.x * CellDensity;
 							float pz = pos.z * CellDensity;
 							float cost = 1.0f;
+							debugColors[i] = Color.HSVToRGB(0, 0, 1);
 
 							if(debugMode == 1){
-								cost = 1 + FlowField.activeFlowField.GetCost(px, pz);
+								cost = 1 + FlowField.activeFlowField.GetCost(px, pz, true, false);
 							}else if(debugMode == 2){
-								cost = 1 + FlowField.activeFlowField.GetCost(px, pz) - FlowField.activeFlowField.GetCost(px, pz, false);
+								cost = 1 + FlowField.activeFlowField.GetCost(px, pz, true, false) - FlowField.activeFlowField.GetCost(px, pz, false, false);
+								if (!FlowField.activeFlowField.IsExplored(px, pz)) {
+									cost = float.MaxValue;
+								}
 							}else if(debugMode == 3){
 								cost = FlowField.activeFlowField.GetWallCost(px, pz) * 5 + 0.1f;
 							}
@@ -216,7 +220,7 @@ public class WorldManager : MonoBehaviour {
 								m.SetTRS(
 									pos,
 									Quaternion.Euler(Vector3.zero),
-									new Vector3(0.5f / CellDensity, cost / 5.0f, 0.5f / CellDensity)
+									new Vector3(0.5f / CellDensity, 0.1f + cost / 5.0f, 0.5f / CellDensity)
 								);
 								chunkPair.Value[i] = m;
 								debugColors[i] = Color.HSVToRGB((cost / 50.0f) % 1, 1, 1);

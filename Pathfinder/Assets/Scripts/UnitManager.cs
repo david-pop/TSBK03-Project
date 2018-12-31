@@ -23,7 +23,7 @@ public class UnitManager : MonoBehaviour {
 		units = new List<GameObject>();
 		selectedUnits = new List<GameObject>();
 
-		int unitCount = 100;
+		int unitCount = 500;
 
 		bool[,] placedUnits = new bool[WorldManager.Instance.GridSize, WorldManager.Instance.GridSize];
 		int failCount = 0;

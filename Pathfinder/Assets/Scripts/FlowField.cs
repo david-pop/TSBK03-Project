@@ -204,7 +204,6 @@ public class FlowField {
 
 		this.UpdateQueue(targetX, targetZ);
 
-		int count = this.searchCount;
 		while (searchQueue.Count > 0 && !this.visitedField[targetX, targetZ]) {
 			Node node = searchQueue.Dequeue();
 			searchQueue.TrimExcess();
@@ -212,10 +211,6 @@ public class FlowField {
 
 			this.searchCount++;
 		}
-
-		//if (count != this.searchCount) {
-		//	Debug.Log("Search: " + this.searchCount + " iterations (" + searchQueue.Count + ")");
-		//}
 	}
 
 	private void Integrate(Node node, int targetX, int targetZ) {
